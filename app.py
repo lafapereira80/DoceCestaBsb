@@ -282,7 +282,7 @@ st.markdown(
       {hero_cena}
     </section>
     <div class="lj-perks">
-      <div class="lj-perk"><i>⏳</i><div><b>24h de antecedência</b><span>72h se tiver mini bolo</span></div></div>
+      <div class="lj-perk"><i>⏳</i><div><b>Pedidos com 24h de antecedência</b><span>72h se tiver mini bolo</span></div></div>
       <div class="lj-perk"><i>💌</i><div><b>Cartão personalizável</b><span>Em todas as cestas</span></div></div>
       <div class="lj-perk"><i>🛵</i><div><b>Entrega ou retirada</b><span>Combinamos com você</span></div></div>
       <div class="lj-perk"><i>💳</i><div><b>Pix ou cartão</b><span>Link de crédito disponível</span></div></div>
