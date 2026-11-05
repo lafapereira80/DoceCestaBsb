@@ -190,7 +190,7 @@ logo_nav = f'<img src="data:image/png;base64,{logo_b64}" alt="">' if logo_b64 el
 # ==========================================================
 st.markdown(
     f"""<div class="lj-nav">
-      <a class="lj-nav-logo" href="#topo">{logo_nav}Doce Cesta</a>
+      <a class="lj-nav-logo" href="#topo">{logo_nav}Doce Cesta Brasília</a>
       <div class="lj-nav-links">
         <a class="l" href="#como-pedir">Como pedir</a><a class="l" href="#catalogo">Catálogo</a><a class="l" href="#contato">Contato</a>
         <a class="cta" href="#catalogo">Ver cestas</a>
