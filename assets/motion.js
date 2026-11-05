@@ -63,6 +63,21 @@
     if (c && !c.contains(ev.relatedTarget)) c.style.transform = '';
   }, {passive: true});
 
+  /* ---- zoom de imagens: overlay no <body> (funciona dentro de qualquer card) ---- */
+  D.addEventListener('click', function(ev){
+    var im = ev.target.closest && ev.target.closest('img[data-zoom]');
+    if (!im) return;
+    ev.preventDefault(); ev.stopPropagation();
+    var old = D.getElementById('dc-zoom'); if (old) old.remove();
+    var box = D.createElement('div'); box.id = 'dc-zoom'; box.setAttribute('role', 'dialog');
+    var big = D.createElement('img'); big.src = im.getAttribute('data-zoom') || im.src; big.alt = im.alt || '';
+    var x = D.createElement('button'); x.type = 'button'; x.setAttribute('aria-label', 'Fechar'); x.textContent = '×';
+    box.appendChild(big); box.appendChild(x); D.body.appendChild(box);
+    function close(){ D.removeEventListener('keydown', esc, true); box.classList.add('out'); setTimeout(function(){ box.remove(); }, 200); }
+    function esc(e){ if (e.key === 'Escape') close(); }
+    box.addEventListener('click', close); D.addEventListener('keydown', esc, true);
+  }, true);
+
   /* ---- rolagem suave para âncoras ---- */
   D.addEventListener('click', function(ev){
     var a = ev.target.closest && ev.target.closest('a[href^="#"]');

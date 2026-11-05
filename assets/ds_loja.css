@@ -37,16 +37,25 @@
 .lj-btn.pri:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 16px 38px rgba(232,162,78,.6)}
 .lj-btn.ghost{color:#fff!important;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(8px)}
 .lj-btn.ghost:hover{background:rgba(255,255,255,.2);transform:translateY(-3px)}
-.lj-scene{position:relative;height:330px;animation:dc-pop .9s .2s var(--spring) both}
-.lj-plate{position:absolute;left:50%;top:52%;width:250px;height:250px;margin:-125px 0 0 -125px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#F3E4D2 70%);box-shadow:0 30px 60px rgba(0,0,0,.4), inset 0 -10px 24px rgba(197,114,31,.18);display:grid;place-items:center;font-size:110px;animation:lj-spin-in 1.2s .3s var(--ease) both}
-@keyframes lj-spin-in{from{transform:rotate(-120deg) scale(.4);opacity:0}to{transform:none;opacity:1}}
-.lj-chip{position:absolute;display:grid;place-items:center;width:62px;height:62px;border-radius:20px;font-size:30px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(10px);box-shadow:0 12px 30px rgba(0,0,0,.28);animation:lj-bob 5s ease-in-out infinite}
-.lj-chip.c1{left:2%;top:8%}.lj-chip.c2{right:0;top:2%;animation-delay:-1.3s}.lj-chip.c3{left:8%;bottom:4%;animation-delay:-2.4s}.lj-chip.c4{right:6%;bottom:10%;animation-delay:-3.4s}
-@keyframes lj-bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-14px) rotate(5deg)}}
-.lj-steam{position:absolute;left:50%;top:-6px;margin-left:-34px;display:flex;gap:12px;z-index:2}
-.lj-steam i{width:7px;height:48px;border-radius:8px;background:linear-gradient(to top,rgba(255,255,255,.6),transparent);filter:blur(1.5px);animation:dc-steam 3.2s ease-in-out infinite}
-.lj-steam i:nth-child(2){animation-delay:.9s;height:60px}.lj-steam i:nth-child(3){animation-delay:1.8s}
-@media (max-width:860px){.lj-hero{grid-template-columns:1fr;border-radius:28px}.lj-scene{height:230px;order:-1}.lj-plate{width:170px;height:170px;margin:-85px 0 0 -85px;font-size:74px}.lj-chip{width:46px;height:46px;font-size:22px;border-radius:15px}}
+/* ---- hero: pilha de polaroids com as cestas cadastradas ---- */
+.lj-scene{position:relative;min-height:380px;display:grid;place-items:center;animation:dc-pop .9s .2s var(--spring) both}
+.lj-stack{position:relative;width:min(340px,86%);aspect-ratio:1/1.12;perspective:1000px}
+.lj-pol{position:absolute;inset:0;display:block;text-decoration:none!important;background:#FFFDF9;border-radius:14px;padding:11px 11px 0;box-shadow:0 26px 50px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.05);
+  transform-origin:50% 100%;will-change:transform,opacity;animation-timing-function:cubic-bezier(.45,.05,.2,1);animation-iteration-count:infinite;animation-fill-mode:both}
+.lj-pol img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;background:#EADFD3}
+.lj-pol figcaption{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:12px 4px 14px}
+.lj-pol b{font:800 16px/1.15 var(--f-display);letter-spacing:-.02em;color:var(--ink);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.lj-pol em{font:700 22px var(--f-script);font-style:normal;color:var(--caramelo-dk);white-space:nowrap}
+.lj-pol::before{content:"";position:absolute;top:-11px;left:50%;width:74px;height:22px;margin-left:-37px;background:rgba(232,162,78,.55);transform:rotate(-3deg);border-radius:3px;z-index:2;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.lj-stack:hover .lj-pol,.lj-stack:hover .lj-dots i::after{animation-play-state:paused}
+.lj-dots{position:absolute;left:0;right:0;bottom:-34px;display:flex;justify-content:center;gap:8px}
+.lj-dots i{width:26px;height:5px;border-radius:5px;background:rgba(255,255,255,.22);position:relative;overflow:hidden}
+.lj-dots i::after{content:"";position:absolute;inset:0;border-radius:5px;background:linear-gradient(90deg,#FFE3B3,#E8A24E);transform:scaleX(0);transform-origin:left;animation-iteration-count:infinite;animation-timing-function:linear}
+.lj-spark{position:absolute;color:#FFE3B3;font-size:22px;animation:lj-twinkle 3s ease-in-out infinite;pointer-events:none;text-shadow:0 0 14px rgba(255,214,150,.9)}
+.lj-spark.s1{left:4%;top:10%}.lj-spark.s2{right:3%;top:26%;animation-delay:-1s;font-size:16px}.lj-spark.s3{left:10%;bottom:12%;animation-delay:-2s;font-size:14px}.lj-spark.s4{right:12%;bottom:6%;animation-delay:-.5s}
+@keyframes lj-twinkle{0%,100%{opacity:.2;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(35deg)}}
+.lj-plate{position:relative;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#F3E4D2 70%);box-shadow:0 30px 60px rgba(0,0,0,.4);display:grid;place-items:center;font-size:110px}
+@media (max-width:860px){.lj-hero{grid-template-columns:1fr;border-radius:28px}.lj-scene{min-height:0;order:-1;padding:18px 0 40px}.lj-stack{width:min(250px,70%)}.lj-pol b{font-size:14px}.lj-pol em{font-size:18px}}
 
 /* ---------- faixa de promessas ---------- */
 .lj-perks{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:30px}
@@ -91,8 +100,8 @@
 @S div[data-testid="stTabs"] [role="tab"][data-selected="true"]{background:var(--cafe-2)!important;border-color:var(--cafe-2)!important;color:#fff!important}
 
 /* card de cesta */
-@S [class*="st-key-dccard-"]{padding:12px 12px 16px!important;border-radius:26px!important;overflow:hidden}
-@S [class*="st-key-dccard-"]:hover{transform:translateY(-8px);box-shadow:var(--sh-3)!important;border-color:var(--brand-ln)!important}
+@S [class*="st-key-dccard-"]{padding:12px 12px 16px!important;border-radius:26px!important}
+@S [class*="st-key-dccard-"]:hover{transform:none!important;box-shadow:var(--sh-3)!important;border-color:var(--brand-ln)!important}
 @S [class*="st-key-dccard-"]::before{content:"";position:absolute;inset:0;border-radius:26px;pointer-events:none;opacity:0;transition:opacity .4s;
   background:radial-gradient(260px 160px at var(--mx,50%) var(--my,0%),rgba(232,162,78,.16),transparent 70%)}
 @S [class*="st-key-dccard-"]:hover::before{opacity:1}
@@ -107,36 +116,46 @@
 .extras-spacer{min-height:var(--min-h,0)}
 .extras-label{font:700 12px var(--f-body);color:var(--muted);margin:8px 6px 4px}
 
-/* foto + lightbox (sem JS) */
-.lightbox-wrapper{width:100%}
-.lightbox-wrapper label{display:block;position:relative;border-radius:20px;overflow:hidden;cursor:zoom-in;background:#F3E9DD}
-.lightbox-toggle{display:none!important}
-.lightbox-image{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;transition:transform .8s var(--ease)}
-@S [class*="st-key-dccard-"]:hover .lightbox-image{transform:scale(1.07)}
-.lightbox-wrapper label::after{content:"⤢ Ampliar";position:absolute;right:10px;bottom:10px;font:800 11.5px var(--f-body);color:#fff;padding:6px 11px;border-radius:999px;background:rgba(30,19,13,.65);backdrop-filter:blur(6px);opacity:0;transform:translateY(6px);transition:all .3s var(--ease)}
-@S [class*="st-key-dccard-"]:hover .lightbox-wrapper label::after{opacity:1;transform:none}
+/* foto do card (zoom é aberto por JS direto no <body>, imune a transform/overflow dos cards) */
+.lightbox-wrapper{position:relative;width:100%;border-radius:20px;overflow:hidden;cursor:zoom-in;background:#F3E9DD;isolation:isolate}
+.lightbox-image{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;transition:transform .9s var(--ease)}
+.lightbox-wrapper:hover .lightbox-image{transform:scale(1.07)}
+.lightbox-wrapper::after{content:"⤢ Ampliar";position:absolute;right:10px;bottom:10px;font:800 11.5px var(--f-body);color:#fff;padding:6px 11px;border-radius:999px;background:rgba(30,19,13,.68);opacity:0;transform:translateY(6px);transition:all .3s var(--ease);pointer-events:none}
+.lightbox-wrapper:hover::after{opacity:1;transform:none}
 .imagem-legenda{display:none}
-.lightbox-modal{position:fixed;inset:0;z-index:999999;background:rgba(20,12,8,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s;cursor:zoom-out}
-.lightbox-modal img{max-width:92vw;max-height:90vh;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);transform:scale(.92);transition:transform .4s var(--spring)}
-.lightbox-toggle:checked ~ .lightbox-modal{opacity:1;visibility:visible}
-.lightbox-toggle:checked ~ .lightbox-modal img{transform:none}
-
 /* botão do card = CTA caramelo */
 @S [class*="st-key-dccard-"] div[data-testid="stButton"] button{background:linear-gradient(135deg,var(--caramelo-2),var(--caramelo) 50%,var(--caramelo-dk))!important;color:#fff!important;border:none!important;min-height:50px;border-radius:16px!important;
   box-shadow:0 10px 24px rgba(197,114,31,.32)!important;font-size:15px!important}
 @S [class*="st-key-dccard-"] div[data-testid="stButton"] button:hover{box-shadow:0 14px 32px rgba(197,114,31,.5)!important;color:#fff!important}
 @S [class*="st-key-dccard-"] div[data-testid="stImage"] img{border-radius:12px}
 
-/* ---------- adicionais (carrossel com snap) ---------- */
-.lj-add{margin:38px 0 10px;padding:26px clamp(16px,3vw,30px);border-radius:32px;background:linear-gradient(135deg,#FFF3E0,#FFF9F0);border:1px solid var(--brand-ln)}
-.lj-add-track{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 2px 14px;scrollbar-width:thin;scrollbar-color:var(--caramelo-2) transparent}
-.adicional-item-box{flex:0 0 150px;scroll-snap-align:start;text-align:center;background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px 10px;box-shadow:var(--sh-1);transition:transform .35s var(--spring),box-shadow .35s}
-.adicional-item-box:hover{transform:translateY(-6px) rotate(-1deg);box-shadow:var(--sh-2)}
-.adicional-img-small{width:96px!important;height:96px!important;max-width:none!important;object-fit:cover;border-radius:16px;display:block;margin:0 auto;cursor:zoom-in}
-.adicional-img-placeholder{width:96px;height:96px;display:grid;place-items:center;font-size:36px;border-radius:16px;background:var(--brand-bg);margin:0 auto}
-.adicional-nome{font:700 13px/1.3 var(--f-body);color:var(--ink);margin:8px 0 6px;min-height:34px}
-.adicional-preco-fixo{font:800 15px var(--f-display);color:var(--pistache)}
-.adicional-preco-consulta{font:800 11px var(--f-body);color:var(--caramelo-dk);background:var(--brand-bg);padding:4px 9px;border-radius:999px;display:inline-block}
+/* ---------- adicionais: varal de luzinhas com etiquetas penduradas ---------- */
+.lj-tags{position:relative;margin:40px 0 14px;border-radius:34px;overflow:hidden;padding:30px 0 8px;isolation:isolate;color:#fff;
+  background:radial-gradient(500px 260px at 15% 0%,rgba(232,162,78,.28),transparent 70%),radial-gradient(420px 240px at 95% 100%,rgba(217,48,79,.18),transparent 70%),linear-gradient(160deg,#2B1A12,#1A100A);box-shadow:var(--sh-3)}
+.lj-tags-head{padding:0 clamp(20px,4vw,38px);max-width:640px}
+.lj-tags-head h2{color:#fff!important;font:800 clamp(26px,3.4vw,38px)/1.05 var(--f-display)!important;letter-spacing:-.04em!important;margin:0 0 8px!important}
+.lj-tags-head p{color:#E6D2BE;margin:0 0 4px;font-size:15px}
+.lj-tags-scroll{overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:rgba(232,162,78,.6) transparent;padding:0 0 26px}
+.lj-tags-inner{position:relative;display:flex;gap:clamp(14px,2vw,26px);width:max-content;min-width:100%;padding:76px clamp(20px,4vw,38px) 10px}
+.lj-wire{position:absolute;left:0;right:0;top:0;height:60px;display:flex;justify-content:space-around;align-items:flex-start;pointer-events:none}
+.lj-wire::before{content:"";position:absolute;left:0;right:0;top:12px;height:2px;background:linear-gradient(90deg,transparent,#6b4a35 8%,#6b4a35 92%,transparent)}
+.lj-bulb{position:relative;width:12px;height:18px;border-radius:50% 50% 55% 55%;background:var(--c);box-shadow:0 0 14px 3px var(--c);animation:lj-bulb 2.6s ease-in-out infinite;animation-delay:var(--dl)}
+.lj-bulb::before{content:"";position:absolute;left:3px;top:-6px;width:6px;height:7px;background:#6b4a35;border-radius:2px}
+@keyframes lj-bulb{0%,100%{opacity:.45;filter:saturate(.8)}50%{opacity:1;filter:saturate(1.3)}}
+.adicional-item-box{position:relative;flex:0 0 168px;scroll-snap-align:center;transform-origin:50% -48px;animation:lj-swing 5.5s ease-in-out infinite alternate;animation-delay:var(--dl,0s);text-align:center;color:var(--ink)}
+.adicional-item-box::before{content:"";position:absolute;left:50%;top:-48px;width:2px;height:54px;background:linear-gradient(#8a6a52,#5a3b28);transform:translateX(-50%)}
+.adicional-item-box:hover{animation-play-state:paused;z-index:3}
+@keyframes lj-swing{from{transform:rotate(calc(var(--r,3deg)*-1))}to{transform:rotate(var(--r,3deg))}}
+.lj-kraft{position:relative;background:linear-gradient(160deg,#F7E8D0,#EBD2AC);border-radius:6px 6px 18px 18px;padding:30px 12px 16px;box-shadow:0 14px 28px rgba(0,0,0,.4),inset 0 0 0 1px rgba(120,80,40,.18);
+  clip-path:polygon(14% 0,86% 0,100% 11%,100% 100%,0 100%,0 11%);transition:transform .35s var(--spring)}
+.adicional-item-box:hover .lj-kraft{transform:scale(1.06)}
+.lj-kraft::before{content:"";position:absolute;left:50%;top:9px;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;background:#1A100A;box-shadow:inset 0 1px 2px rgba(0,0,0,.6),0 0 0 3px rgba(255,255,255,.35)}
+.adicional-img-small{display:block;width:100%!important;aspect-ratio:1/1;height:auto!important;max-width:none!important;object-fit:cover;border-radius:10px;cursor:zoom-in;box-shadow:0 4px 10px rgba(0,0,0,.25);border:3px solid #fff}
+.adicional-img-placeholder{width:100%;aspect-ratio:1/1;display:grid;place-items:center;font-size:48px;border-radius:10px;background:repeating-linear-gradient(45deg,#fff8ec 0 8px,#f6e6cc 8px 16px);border:3px solid #fff}
+.adicional-nome{font:800 14px/1.25 var(--f-display);letter-spacing:-.01em;color:#3B2417;margin:11px 0 9px;min-height:35px;display:flex;align-items:center;justify-content:center}
+.adicional-preco-fixo,.adicional-preco-consulta{display:inline-block;font:800 13px var(--f-body);color:#9E1F2E;border:2px solid #9E1F2E;border-radius:8px;padding:4px 10px;transform:rotate(-3deg);letter-spacing:.02em;background:rgba(255,255,255,.35)}
+.adicional-preco-consulta{font-size:11px;color:#6b4a35;border-color:#6b4a35}
+@media (max-width:640px){.adicional-item-box{flex-basis:148px}.lj-tags{border-radius:26px}}
 
 /* ---------- faixa corporativa ---------- */
 .faixa-corporativa{position:relative;overflow:hidden;border-radius:30px;padding:30px clamp(20px,4vw,40px);margin:26px 0;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;color:#fff;
