@@ -186,11 +186,86 @@ logo_b64 = carregar_logo_base64()
 logo_nav = f'<img src="data:image/png;base64,{logo_b64}" alt="">' if logo_b64 else ""
 
 # ==========================================================
+# HERO: pilha de polaroids com as cestas cadastradas
+# ==========================================================
+def montar_cena_hero():
+    try:
+        _, cestas_hero = obter_vitrine_oficial()
+    except Exception:
+        cestas_hero = []
+
+    itens = []
+    for c in cestas_hero:
+        img = c.get("imagem")
+        if not (img and str(img).strip()):
+            continue
+        src = _url_imagem_segura(image_to_base64(img))
+        if not src:
+            continue
+        preco = c.get("preco_promocional") if c.get("em_promocao") and c.get("preco_promocional") else c.get("preco")
+        try:
+            preco_txt = f"R$ {float(preco):,.0f}".replace(",", ".")
+        except Exception:
+            preco_txt = ""
+        itens.append((html.escape(str(c.get("nome") or "Cesta")), html.escape(src, quote=True), preco_txt))
+        if len(itens) == 6:
+            break
+
+    faiscas = '<span class="lj-spark s1">✦</span><span class="lj-spark s2">✦</span><span class="lj-spark s3">✦</span><span class="lj-spark s4">✦</span>'
+    if not itens:
+        return f'<div class="lj-scene" aria-hidden="true">{faiscas}<div class="lj-plate">🧺</div></div>'
+    if len(itens) == 1:
+        nome, src, preco_txt = itens[0]
+        return (f'<div class="lj-scene">{faiscas}<div class="lj-stack"><a class="lj-pol" href="#catalogo" style="transform:rotate(-2deg)">'
+                f'<img src="{src}" alt="{nome}"><figcaption><b>{nome}</b><em>{preco_txt}</em></figcaption></a></div></div>')
+
+    n = len(itens)
+    passo = 4.2
+    total = n * passo
+    dm = min(n - 1, 2)
+    estados = {
+        "h": "transform:translate(20%,-8%) rotate(12deg) scale(.82);opacity:0;z-index:0",
+        2: "transform:translate(15%,-5%) rotate(8deg) scale(.9);opacity:.85;z-index:1",
+        1: "transform:translate(7%,-2%) rotate(4deg) scale(.95);opacity:1;z-index:2",
+        0: "transform:translate(0,0) rotate(-2deg) scale(1);opacity:1;z-index:3",
+        "o": "transform:translate(-95%,6%) rotate(-20deg) scale(.96);opacity:0;z-index:4",
+    }
+    a = 18.0 / n  # % do ciclo gasto em cada transição
+    quadros = [(0.0, "h")]
+    for d in range(dm, -1, -1):
+        ini = (n - 1 - d) / n * 100
+        anterior = "h" if d == dm else d + 1
+        if ini > 0:
+            quadros.append((ini, anterior))
+        quadros.append((ini + a, d))
+    quadros.append((100 - a, 0))
+    quadros.append((100.0, "o"))
+    css_q = "".join(f"{pct:.3f}%{{{estados[est]}}}" for pct, est in quadros)
+    ini_ativo = (n - 1) / n * 100
+    css = (f"@keyframes lj-st{{{css_q}}}"
+           f"@keyframes lj-dt{{0%,{ini_ativo:.3f}%{{transform:scaleX(0)}}{ini_ativo + a:.3f}%,99.9%{{transform:scaleX(1)}}100%{{transform:scaleX(0)}}}}")
+    polaroids, pontos = [], []
+    for i, (nome, src, preco_txt) in enumerate(itens):
+        q = ((n - 1 - i) / n + 0.5 / n)
+        atraso = -(q * total)
+        polaroids.append(f'<a class="lj-pol" href="#catalogo" style="animation-name:lj-st;animation-duration:{total:.1f}s;animation-delay:{atraso:.2f}s">'
+                         f'<img src="{src}" alt="{nome}" loading="eager"><figcaption><b>{nome}</b><em>{preco_txt}</em></figcaption></a>')
+        pontos.append(f'<i><span style="position:absolute;inset:0"></span></i>')
+    pontos_html = "".join(
+        f'<i style="--d:{-(((n - 1 - i) / n + 0.5 / n) * total):.2f}s"></i>' for i in range(n))
+    css += f".lj-dots i::after{{animation-name:lj-dt;animation-duration:{total:.1f}s;animation-delay:var(--d)}}"
+    return (f'<style>{css}</style><div class="lj-scene">{faiscas}<div class="lj-stack">{"".join(polaroids)}'
+            f'<div class="lj-dots" aria-hidden="true">{pontos_html}</div></div></div>')
+
+
+hero_cena = montar_cena_hero()
+
+# ==========================================================
 # BARRA DE NAVEGAÇÃO + HERO
 # ==========================================================
 st.markdown(
     f"""<div class="lj-nav">
-      <a class="lj-nav-logo" href="#topo">{logo_nav}Doce Cesta Brasília</a>
+      <a class="lj-nav-logo" href="#topo">{logo_nav}Doce Cesta</a>
       <div class="lj-nav-links">
         <a class="l" href="#como-pedir">Como pedir</a><a class="l" href="#catalogo">Catálogo</a><a class="l" href="#contato">Contato</a>
         <a class="cta" href="#catalogo">Ver cestas</a>
@@ -204,11 +279,7 @@ st.markdown(
         <p class="lead">Montadas à mão no estilo grazing, com cartão personalizável. Escolha uma cesta, monte do seu jeito e a gente entrega o carinho na porta de quem você ama.</p>
         <div class="ctas"><a class="lj-btn pri" href="#catalogo">🎁 Escolher minha cesta</a><a class="lj-btn ghost" href="{WHATS}" target="_blank" rel="noopener">💬 Falar no WhatsApp</a></div>
       </div>
-      <div class="lj-scene" aria-hidden="true">
-        <div class="lj-steam"><i></i><i></i><i></i></div>
-        <div class="lj-plate">🧺</div>
-        <div class="lj-chip c1">🍓</div><div class="lj-chip c2">☕</div><div class="lj-chip c3">🥐</div><div class="lj-chip c4">💌</div>
-      </div>
+      {hero_cena}
     </section>
     <div class="lj-perks">
       <div class="lj-perk"><i>⏳</i><div><b>24h de antecedência</b><span>72h se tiver mini bolo</span></div></div>
@@ -329,18 +400,7 @@ else:
                                 if img_src:
                                     img_src_seguro = html.escape(img_src, quote=True)
                                     st.markdown(
-                                        f"""
-                                        <div class="lightbox-wrapper">
-                                            <label style="cursor: zoom-in; width: 100%; display: flex; flex-direction: column; align-items: center;">
-                                                <input type="checkbox" class="lightbox-toggle">
-                                                <img src="{img_src_seguro}" class="lightbox-image" alt="Foto de {cesta_nome_seguro}" title="Clique para ampliar a foto da cesta" loading="lazy" decoding="async">
-                                                <div class="lightbox-modal">
-                                                    <img src="{img_src_seguro}" alt="Foto ampliada de {cesta_nome_seguro}">
-                                                </div>
-                                            </label>
-                                            <div class="imagem-legenda">👆 Toque na foto para ampliar</div>
-                                        </div>
-                                        """,
+                                        f"""<div class="lightbox-wrapper"><img src="{img_src_seguro}" data-zoom="{img_src_seguro}" class="lightbox-image" alt="Foto de {cesta_nome_seguro}" title="Clique para ampliar a foto da cesta" loading="lazy" decoding="async"></div>""",
                                         unsafe_allow_html=True
                                     )
 
@@ -395,7 +455,8 @@ else:
 # ==========================================================
 if produtos_adicionais:
     cards_html = ""
-    for prod in produtos_adicionais:
+    cores_luz = ["#FFB347", "#FF6F91", "#7BDFA0", "#FFE08A", "#8EC5FF"]
+    for idx_p, prod in enumerate(produtos_adicionais):
         nome_p = str(prod.get("nome") or "")
         nome_p_seguro = html.escape(nome_p)
         preco_p = prod.get("preco")
@@ -407,25 +468,33 @@ if produtos_adicionais:
                 texto_preco = f'R$ {val_f:,.2f}'.replace(",", "X").replace(".", ",").replace("X", ".")
                 span_preco = f'<span class="adicional-preco-fixo">{texto_preco}</span>'
             except Exception:
-                span_preco = '<span class="adicional-preco-consulta">Consulta</span>'
+                span_preco = '<span class="adicional-preco-consulta">Sob consulta</span>'
         else:
-            span_preco = '<span class="adicional-preco-consulta">Consulta</span>'
+            span_preco = '<span class="adicional-preco-consulta">Sob consulta</span>'
 
         img_src = _url_imagem_segura(image_to_base64(imagem_p)) if imagem_p and str(imagem_p).strip() else ""
         if img_src:
             img_src_seguro = html.escape(img_src, quote=True)
-            img_html = f'<label style="cursor: zoom-in; display: block;"><input type="checkbox" class="lightbox-toggle"><img src="{img_src_seguro}" class="adicional-img-small" alt="{nome_p_seguro}" loading="lazy"><div class="lightbox-modal"><img src="{img_src_seguro}" alt="{nome_p_seguro}"></div></label>'
+            img_html = f'<img src="{img_src_seguro}" data-zoom="{img_src_seguro}" class="adicional-img-small" alt="{nome_p_seguro}" title="Clique para ampliar" loading="lazy">'
         else:
             icone = "📷" if "polaroid" in nome_p.lower() else "🎀"
             img_html = f'<div class="adicional-img-placeholder">{icone}</div>'
 
-        cards_html += f'<div class="adicional-item-box">{img_html}<div class="adicional-nome">{nome_p_seguro}</div><div>{span_preco}</div></div>'
+        angulo = 2.2 + (idx_p % 3) * 0.9
+        atraso = -((idx_p * 1.37) % 5.5)
+        cards_html += (f'<div class="adicional-item-box" style="--r:{angulo:.1f}deg;--dl:{atraso:.2f}s">'
+                       f'<div class="lj-kraft">{img_html}<div class="adicional-nome">{nome_p_seguro}</div>{span_preco}</div></div>')
+
+    qtd_luzes = max(10, len(produtos_adicionais) * 3)
+    luzes = "".join(
+        f'<i class="lj-bulb" style="--c:{cores_luz[i % len(cores_luz)]};--dl:{-(i * 0.43) % 2.6:.2f}s;margin-top:{4 * (1 - ((2 * i / (qtd_luzes - 1)) - 1) ** 2):.1f}px"></i>'
+        for i in range(qtd_luzes))
 
     st.markdown(
-        f"""<div class="lj-add">
-            <h2 class="lj-h2" style="font-size:26px">🎀 Incremente seu presente</h2>
-            <p class="lj-sub">Escolha os adicionais na próxima tela, durante a montagem. Deslize para ver todos e toque na foto para ampliar.</p>
-            <div class="lj-add-track">{cards_html}</div></div>""".replace("\n", ""),
+        f"""<div class="lj-tags">
+            <div class="lj-tags-head"><h2>Dê um toque só seu ✨</h2>
+            <p>Balões, polaroids, flores e mimos para pendurar no presente. Você escolhe os adicionais na próxima tela, durante a montagem. Toque numa foto para ampliar.</p></div>
+            <div class="lj-tags-scroll"><div class="lj-tags-inner"><div class="lj-wire" aria-hidden="true">{luzes}</div>{cards_html}</div></div></div>""".replace("\n", ""),
         unsafe_allow_html=True,
     )
 
