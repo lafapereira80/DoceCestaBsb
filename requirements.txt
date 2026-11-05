@@ -1,0 +1,9 @@
+streamlit
+pandas
+plotly
+psycopg2-binary
+reportlab
+streamlit-cookies-controller
+requests
+bcrypt
+boto3

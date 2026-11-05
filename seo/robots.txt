@@ -1,0 +1,27 @@
+User-agent: *
+Allow: /$
+Allow: /Inicio
+Allow: /politica_privacidade
+
+Disallow: /Pedidos
+Disallow: /Clientes
+Disallow: /Cestas
+Disallow: /Produtos
+Disallow: /Financeiro
+Disallow: /Usuarios
+Disallow: /Entregas
+Disallow: /Detalhes_Pedido
+Disallow: /Editar_Produto
+Disallow: /Editar_Cesta
+Disallow: /Produtos_da_Cesta
+Disallow: /Historico_Cliente
+Disallow: /Configurar_Cesta
+Disallow: /Categorias
+Disallow: /Previsao
+Disallow: /Secoes_Vitrine
+Disallow: /Corporativo
+Disallow: /Pedido_Manual
+Disallow: /Configuracoes_Loja
+Disallow: /Admin
+
+Sitemap: https://www.docecestabrasilia.com.br/sitemap.xml
