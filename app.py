@@ -281,7 +281,7 @@ st.markdown(
       </div>
       {hero_cena}
     </section>
-    unsafe_allow_html=True,
+    """. unsafe_allow_html=True,
 )
 
 # ==========================================================
