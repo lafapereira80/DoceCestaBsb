@@ -289,8 +289,20 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background: #ffffff !important
 """, unsafe_allow_html=True)
 
 
-def salvar_nota_interna(pid, key):
-    nova_nota = st.session_state[key]
+MARCA_FRETE = "[FRETE_DEFINIDO]"  # indica que o frete foi definido manualmente (permite R$ 0,00)
+
+
+def _nota_sem_marca(txt):
+    return str(txt or "").replace(MARCA_FRETE, "").strip()
+
+
+def _nota_com_marca(txt, tem_marca):
+    limpo = _nota_sem_marca(txt)
+    return (limpo + "\n" + MARCA_FRETE).strip() if tem_marca else limpo
+
+
+def salvar_nota_interna(pid, key, tem_marca=False):
+    nova_nota = _nota_com_marca(st.session_state[key], tem_marca)
     try:
         supabase.table("pedidos").update({"anotacoes_internas": nova_nota}).eq("id", pid).execute()
         st.toast("✅ Anotação interna salva com sucesso!")
@@ -387,7 +399,9 @@ sugestao_frete = 0.0
 if cep_cliente and len(cep_cliente) == 8:
     sugestao_frete = calcular_frete_por_cep(cep_cliente)
 
-valor_padrao_frete = frete_db if frete_db > 0 else sugestao_frete
+frete_definido_manual = MARCA_FRETE in str(pedido.get('anotacoes_internas') or '')
+# Só sugere frete pelo CEP enquanto o frete nunca foi definido; depois disso, R$ 0,00 é um valor válido
+valor_padrao_frete = frete_db if (frete_db > 0 or frete_definido_manual) else sugestao_frete
 
 if "modo_edicao" not in st.session_state: st.session_state.modo_edicao = False
 
@@ -656,7 +670,7 @@ if not st.session_state.modo_edicao:
 
     with st.container(border=True):
         st.markdown("<div style='font-size: 13px; font-weight: 800; color: #b06000; margin-bottom: 4px;'>⚠️ Anotações Internas</div>", unsafe_allow_html=True)
-        st.text_area("Anotações Internas", value=pedido.get('anotacoes_internas') or '', height=80, key=f"nota_{pedido_id}", on_change=salvar_nota_interna, args=(pedido_id, f"nota_{pedido_id}"), label_visibility="collapsed")
+        st.text_area("Anotações Internas", value=_nota_sem_marca(pedido.get('anotacoes_internas')), height=80, key=f"nota_{pedido_id}", on_change=salvar_nota_interna, args=(pedido_id, f"nota_{pedido_id}", frete_definido_manual), label_visibility="collapsed")
 
     st.markdown("<div class='section-step'><span class='step-num'>⚡</span><span style='color:#137333;'>Resumo de Valores</span></div>", unsafe_allow_html=True)
     with st.container(border=True):
@@ -955,7 +969,7 @@ else:
             e_msg = st.text_area("Mensagem do Cartão", value=pedido.get('mensagem') or '', height=70)
             e_pedido_especial = st.text_area("Pedido Especial", value=pedido.get('pedido_especial') or '', height=70)
         with c10: 
-            e_anotacoes = st.text_area("Anotações Internas", value=pedido.get('anotacoes_internas') or '', height=185)
+            e_anotacoes = st.text_area("Anotações Internas", value=_nota_sem_marca(pedido.get('anotacoes_internas')), height=185)
 
     # =====================================================
     # PRODUTOS E EXTRAS (FECHAMENTO)
@@ -1227,7 +1241,7 @@ else:
     with st.container(border=True):
         st.markdown("<div class='card-title'>💰 FECHAMENTO FINANCEIRO</div>", unsafe_allow_html=True)
         c_f1, c_f2, c_f3 = st.columns(3)
-        with c_f1: e_frete = st.number_input("Frete / Taxa (R$)", min_value=0.0, step=5.0, value=float(valor_padrao_frete))
+        with c_f1: e_frete = st.number_input("Frete / Taxa (R$)", min_value=0.0, step=0.5, format="%.2f", value=float(valor_padrao_frete))
         with c_f2: e_desc = st.number_input("Desconto (%)", min_value=0.0, max_value=100.0, step=1.0, value=desc_perc_inicial)
         with c_f3: e_pag = st.selectbox("Pagamento Edit", ["Pix", "Cartão de Crédito", "Faturamento", "Transferência"], index=["Pix", "Cartão de Crédito", "Faturamento", "Transferência"].index(pedido.get('pagamento') or 'Pix') if pedido.get('pagamento') in ["Pix", "Cartão de Crédito", "Faturamento", "Transferência"] else 0)
 
@@ -1284,7 +1298,7 @@ else:
                 "cliente_telefone": e_tel, "cliente_cpf": e_cpf, "destinatario_nome": e_dest.strip(),
                 "destinatario_telefone": e_dtel, "motivo_homenagem": e_motivo, "endereco": e_end,
                 "data_entrega": e_data.strftime("%Y-%m-%d"), "periodo_entrega": e_per, "mensagem": e_msg,
-                "anotacoes_internas": e_anotacoes.strip(), "pedido_especial": e_pedido_especial.strip(),
+                "anotacoes_internas": _nota_com_marca(e_anotacoes, True), "pedido_especial": e_pedido_especial.strip(),
                 "cesta_nome": n_cesta, "cesta_id": id_cesta, "produtos": "\n\n".join(str_prod),
                 "adicionais": msg_add.strip(), "pagamento": e_pag,
                 "valor_frete": e_frete, "valor_total": total_liquido,
