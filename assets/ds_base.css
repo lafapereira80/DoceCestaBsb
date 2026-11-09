@@ -277,3 +277,9 @@ html body [data-test-script-state="running"]::before{opacity:1;animation:dc-run 
 @S div[data-testid="stRadio"] label > div:first-child{flex:0 0 auto!important;width:auto!important;margin-right:0!important}
 @S div[data-testid="stRadio"] label > div:last-child, @S div[data-testid="stRadio"] label [data-testid="stMarkdownContainer"]{display:block!important;text-align:left!important;flex:1 1 auto!important}
 @S div[data-testid="stRadio"] label p{display:inline!important;text-align:left!important}
+
+/* radio (correção final): tudo dentro da opção em LINHA — bolinha | nome */
+@S div[data-testid="stRadio"] label, @S div[data-testid="stRadioGroup"] label{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:10px!important}
+@S div[data-testid="stRadio"] label div, @S div[data-testid="stRadioGroup"] label div{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;width:auto!important;max-width:100%!important}
+@S div[data-testid="stRadio"] label [data-testid="stMarkdownContainer"], @S div[data-testid="stRadioGroup"] label [data-testid="stMarkdownContainer"]{display:block!important;width:auto!important}
+@S div[data-testid="stRadio"] label p, @S div[data-testid="stRadioGroup"] label p{display:block!important;margin:0!important;white-space:normal!important}
