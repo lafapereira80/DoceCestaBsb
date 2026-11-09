@@ -269,3 +269,11 @@ html body [data-test-script-state="running"]::before{opacity:1;animation:dc-run 
   @S [data-testid="stTextInputRootElement"]:focus-within, @S [data-testid="stTextAreaRootElement"]:focus-within, @S [data-testid="stDateInputField"]:focus-within,
   @S [data-testid="stSelectbox"] [role="group"]:focus-within, @S [data-testid="stMultiSelect"] [role="group"]:focus-within{box-shadow:0 0 0 4px rgba(197,114,31,.16)!important}
 }
+
+/* radio: bolinha e nome do item lado a lado (celular e computador) */
+@S div[data-testid="stRadio"] label[data-baseweb="radio"], @S div[data-testid="stRadio"] label[data-testid="stRadioOption"], @S div[data-testid="stRadio"] label{
+  flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-start!important}
+@S div[data-testid="stRadio"] label > div{flex-direction:row!important;align-items:center!important;margin:0!important}
+@S div[data-testid="stRadio"] label > div:first-child{flex:0 0 auto!important;width:auto!important;margin-right:0!important}
+@S div[data-testid="stRadio"] label > div:last-child, @S div[data-testid="stRadio"] label [data-testid="stMarkdownContainer"]{display:block!important;text-align:left!important;flex:1 1 auto!important}
+@S div[data-testid="stRadio"] label p{display:inline!important;text-align:left!important}
