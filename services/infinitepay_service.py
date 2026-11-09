@@ -1,7 +1,6 @@
 import re
 import requests
 import streamlit as st
-from utils.encurtador import encurtar_link
 
 URL_API = "https://api.checkout.infinitepay.io/links"
 
@@ -134,7 +133,7 @@ def gerar_link_checkout_infinitepay(pedido_id: str, valor_total: float, cliente_
                     continue
                 link_longo = _extrair_url(dados)
                 if link_longo:
-                    return encurtar_link(link_longo)
+                    return str(link_longo).strip()  # link original da InfinitePay, sem encurtador
                 ultimo_erro = f"Resposta sem link de checkout: {str(dados)[:300]}"
                 continue
 

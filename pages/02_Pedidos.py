@@ -246,37 +246,69 @@ qtd_recebido = sum(1 for p in todos_pedidos if p.get('status') == 'Recebido')
 qtd_pago = sum(1 for p in todos_pedidos if p.get('status') in ('Pago', 'Entregue', 'Enviado', 'Em Rota de Entrega'))
 qtd_desistencia = sum(1 for p in todos_pedidos if p.get('status') == 'Desistência')
 
+if "filtro_pedidos" not in st.session_state:
+    st.session_state["filtro_pedidos"] = "Recebidos"
+
+
+def _definir_filtro(chave):
+    atual = st.session_state.get("filtro_pedidos")
+    st.session_state["filtro_pedidos"] = "Todos" if (atual == chave and chave != "Todos") else chave
+
+
+STATUS_PAGOS = ("Pago", "Entregue", "Enviado", "Em Rota de Entrega")
+filtro_atual = st.session_state["filtro_pedidos"]
+
 metricas = [
-    ("📥", qtd_recebido, "Recebidos"),
-    ("💰", qtd_pago, "Pagos"),
-    ("⚠️", qtd_desistencia, "Desistências"),
-    ("📦", len(todos_pedidos), "Total Ativo"),
+    ("Recebidos", "📥", qtd_recebido, "Recebidos", "#1a73e8"),
+    ("Pagos", "💰", qtd_pago, "Pagos", "#137333"),
+    ("Desistência", "⚠️", qtd_desistencia, "Desistências", "#b06000"),
+    ("Todos", "📦", len(todos_pedidos), "Total ativo", "#8a5a2b"),
 ]
-metrics_html = "<div class='metrics-grid'>" + "".join(
-    f"""<div class="metric-box">
-        <div class="metric-icon">{icone}</div>
-        <div>
-            <div class="metric-num">{num}</div>
-            <div class="metric-label">{label}</div>
-        </div>
-    </div>"""
-    for icone, num, label in metricas
-) + "</div>"
-st.markdown(metrics_html, unsafe_allow_html=True)
+
+st.markdown(
+    """<style>
+    html body .stApp [class*="st-key-flt_"] { position: relative; gap: 0 !important; }
+    html body .stApp [class*="st-key-flt_"] [data-testid="stMarkdownContainer"] { margin-bottom: 0 !important; }
+    html body .stApp [class*="st-key-flt_"] [data-testid="stMarkdown"], html body .stApp [class*="st-key-flt_"] [data-testid="stElementContainer"]:has(.metric-box) { height: auto !important; min-height: 0 !important; }
+    html body .stApp [class*="st-key-flt_"] [data-testid="stElementContainer"]:has([data-testid="stButton"]),
+    html body .stApp [class*="st-key-flt_"] [data-testid="stButton"] { position: absolute !important; inset: 0 !important; z-index: 5; margin: 0 !important; }
+    html body .stApp [class*="st-key-flt_"] [data-testid="stButton"] button { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; min-height: 0 !important; opacity: 0 !important; cursor: pointer; }
+    html body .stApp [class*="st-key-flt_"] .metric-box { cursor: pointer; border: 2px solid var(--line) !important; transition: transform .3s var(--ease), box-shadow .3s ease, border-color .25s ease, background .25s ease; position: relative; }
+    html body .stApp [class*="st-key-flt_"]:hover .metric-box { transform: translateY(-3px); box-shadow: var(--sh-2) !important; border-color: var(--ac) !important; }
+    html body .stApp [class*="st-key-flt_"] .metric-box.ativo { border-color: var(--ac) !important; background: color-mix(in srgb, var(--ac) 9%, #fff) !important; box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac) 18%, transparent), var(--sh-2) !important; }
+    html body .stApp [class*="st-key-flt_"] .metric-box.ativo::after { content: "✓ filtrando"; position: absolute; top: -10px; right: 12px; font: 800 10px var(--f-body); color: #fff; background: var(--ac); padding: 3px 9px; border-radius: 999px; letter-spacing: .02em; }
+    html body .stApp [class*="st-key-flt_"] .metric-box.ativo .metric-num { color: var(--ac) !important; }
+    @media (max-width: 640px) {
+        html body .stApp [data-testid="stColumn"]:has(.st-key-sel_colunas) { display: none !important; }
+        html body .stApp div[data-testid="stHorizontalBlock"]:has([class*="st-key-flt_"]) { flex-wrap: wrap !important; gap: 12px 8px !important; margin-bottom: 6px; }
+        html body .stApp div[data-testid="stHorizontalBlock"]:has([class*="st-key-flt_"]) > div { flex: 1 1 calc(50% - 8px) !important; min-width: calc(50% - 8px) !important; }
+    }
+    </style>""",
+    unsafe_allow_html=True,
+)
+
+cols_cards = st.columns(4)
+for idx_card, (col_card, (chave, icone, num, label, cor)) in enumerate(zip(cols_cards, metricas)):
+    ativo = filtro_atual == chave
+    with col_card:
+        with st.container(key=f"flt_{idx_card}{'_on' if ativo else ''}"):
+            st.markdown(
+                f"""<div class="metric-box{' ativo' if ativo else ''}" style="--ac:{cor};">
+                    <div class="metric-icon">{icone}</div>
+                    <div><div class="metric-num">{num}</div><div class="metric-label">{label}</div></div>
+                </div>""".replace("\n", ""),
+                unsafe_allow_html=True,
+            )
+            st.button("Filtrar", key=f"btn_flt_{chave}", on_click=_definir_filtro, args=(chave,), use_container_width=True, help=f"Mostrar: {label}")
 
 st.write("")
-
-c_filtro, c_busca, c_colunas, c_refresh = st.columns([2.4, 1.6, .8, .6])
-with c_filtro:
-    filtro_selecionado = st.radio(
-        "Filtro:",
-        [f"Recebidos ({qtd_recebido})", f"Pagos ({qtd_pago})", f"Desistência ({qtd_desistencia})", "Todos"],
-        horizontal=True,
-    )
-with c_busca:
-    busca = st.text_input("Buscar cliente ou ID", placeholder="🔎 Buscar cliente ou #ID", label_visibility="collapsed")
+c_info, c_colunas, c_refresh = st.columns([3.2, .8, .8])
+with c_info:
+    rotulo_filtro = {"Recebidos": "Recebidos", "Pagos": "Pagos", "Desistência": "Desistências", "Todos": "Todos os pedidos"}[filtro_atual]
+    st.caption(f"Clique em um card acima para filtrar · mostrando: **{rotulo_filtro}**")
 with c_colunas:
-    n_colunas = st.selectbox("Colunas", [2, 3, 4], index=1, label_visibility="collapsed")
+    with st.container(key="sel_colunas"):
+        n_colunas = st.selectbox("Colunas", [2, 3, 4], index=1, label_visibility="collapsed")
 with c_refresh:
     if st.button("🔄 Atualizar", use_container_width=True):
         carregar_pedidos.clear()
@@ -285,28 +317,22 @@ with c_refresh:
 pedidos_filtrados = []
 for p in todos_pedidos:
     st_atual = p.get('status', '')
-    if filtro_selecionado.startswith("Recebidos") and st_atual == "Recebido":
+    if filtro_atual == "Recebidos" and st_atual == "Recebido":
         pedidos_filtrados.append(p)
-    elif filtro_selecionado.startswith("Pagos") and st_atual in ('Pago', 'Entregue', 'Enviado', 'Em Rota de Entrega'):
+    elif filtro_atual == "Pagos" and st_atual in STATUS_PAGOS:
         pedidos_filtrados.append(p)
-    elif filtro_selecionado.startswith("Desistência") and st_atual == "Desistência":
+    elif filtro_atual == "Desistência" and st_atual == "Desistência":
         pedidos_filtrados.append(p)
-    elif filtro_selecionado.startswith("Todos"):
+    elif filtro_atual == "Todos":
         pedidos_filtrados.append(p)
-
-if busca:
-    termo = busca.strip().lower()
-    pedidos_filtrados = [
-        p for p in pedidos_filtrados
-        if termo in str(p.get('cliente_nome') or '').lower()
-        or termo in str(p['id']).split('-')[0].lower()
-    ]
 
 if not pedidos_filtrados:
-    st.info("Nenhum pedido encontrado no filtro.")
+    st.info("Nenhum pedido neste filtro. Clique em outro card para ver mais pedidos.")
     st.stop()
 
-cols = st.columns(n_colunas)
+grade_pedidos = st.container(key="grid_pedidos")
+with grade_pedidos:
+    cols = st.columns(n_colunas)
 for idx, p in enumerate(pedidos_filtrados):
     col = cols[idx % n_colunas]
     pid = p['id']

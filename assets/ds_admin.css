@@ -138,3 +138,16 @@
 
 @S [data-testid="stMain"] [data-testid="stPageLink"], @S [data-testid="stMain"] [data-testid="stPageLink"] a{width:100%}
 @S [data-testid="stMain"] a[data-testid^="stPageLink"]{display:flex!important;justify-content:flex-start}
+
+/* ---------- reabrir o menu lateral (desktop) ---------- */
+@S [data-testid="stExpandSidebarButton"], @S [data-testid="stSidebarCollapsedControl"], @S [data-testid="collapsedControl"]{opacity:0!important;pointer-events:none!important;position:fixed!important;left:-9999px}
+@S [data-testid="stExpandSidebarButton"] button, @S [data-testid="stSidebarCollapsedControl"] button, @S [data-testid="collapsedControl"] button{
+  background:var(--cafe-2)!important;color:#fff!important;border-radius:14px!important;border:1px solid rgba(255,255,255,.15)!important;box-shadow:0 8px 20px rgba(30,19,13,.35)!important;width:44px;height:44px}
+@S [data-testid="stExpandSidebarButton"] *, @S [data-testid="stSidebarCollapsedControl"] *{color:#fff!important}
+#dc-side-toggle{position:fixed;left:14px;top:14px;z-index:2147483000;pointer-events:auto;display:none;align-items:center;gap:9px;padding:10px 16px 10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.14);cursor:pointer;
+  background:rgba(30,19,13,.94);backdrop-filter:blur(10px);color:#F2E6DA;font:700 13px var(--f-body);box-shadow:0 10px 30px rgba(30,19,13,.4);animation:dc-pop2 .4s var(--spring) both;transition:transform .3s var(--spring)}
+#dc-side-toggle.show{display:flex}
+#dc-side-toggle:hover{transform:translateY(-2px) scale(1.04)}
+#dc-side-toggle i{font-style:normal;font-size:17px}
+@media (max-width:820px){#dc-side-toggle{display:none!important}
+  @S [data-testid="stExpandSidebarButton"], @S [data-testid="stSidebarCollapsedControl"], @S [data-testid="collapsedControl"]{opacity:1!important;pointer-events:auto!important;position:static!important}}

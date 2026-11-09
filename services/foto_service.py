@@ -1,3 +1,5 @@
+import io
+import mimetypes
 import streamlit as st
 import boto3
 from uuid import uuid4
@@ -34,16 +36,36 @@ def salvar_fotos(pedido_id, arquivos):
 
     for arquivo in arquivos:
         try:
-            extensao = arquivo.name.split(".")[-1]
+            extensao = (arquivo.name.rsplit(".", 1)[-1] if "." in arquivo.name else "jpg").lower()
+            conteudo = arquivo.getvalue() if hasattr(arquivo, "getvalue") else arquivo.read()
+            if not conteudo:
+                raise ValueError("arquivo vazio (o carregamento não terminou)")
+            tipo = getattr(arquivo, "type", "") or mimetypes.guess_type(arquivo.name)[0] or "application/octet-stream"
+
+            # iPhone: HEIC/HEIF não abre em navegadores/WhatsApp -> converte para JPEG quando possível
+            if extensao in ("heic", "heif") or tipo in ("image/heic", "image/heif"):
+                try:
+                    from PIL import Image
+                    try:
+                        import pillow_heif
+                        pillow_heif.register_heif_opener()
+                    except Exception:
+                        pass
+                    img = Image.open(io.BytesIO(conteudo)).convert("RGB")
+                    buf = io.BytesIO()
+                    img.save(buf, format="JPEG", quality=92)
+                    conteudo, extensao, tipo = buf.getvalue(), "jpg", "image/jpeg"
+                except Exception:
+                    pass
+
             nome_arquivo = f"{pedido_id}/{uuid4()}.{extensao}"
-            
-            # 1. Faz o upload para o Cloudflare R2
-            # O Streamlit UploadedFile funciona nativamente como um fileobj
+
+            # 1. Faz o upload para o Cloudflare R2 (sempre do início do arquivo)
             s3_client.upload_fileobj(
-                arquivo,
+                io.BytesIO(conteudo),
                 nome_bucket,
                 nome_arquivo,
-                ExtraArgs={"ContentType": arquivo.type}
+                ExtraArgs={"ContentType": tipo}
             )
 
             # 2. Gera o link público oficial a partir da URL do Secrets

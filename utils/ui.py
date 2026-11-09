@@ -8,7 +8,8 @@ Tudo que é visual e compartilhado vive aqui:
     qualquer versão do Streamlit (o seletor antigo `stVerticalBlockBorderWrapper` deixou de existir).
 """
 import html
-import itertools
+import re
+import sys
 from pathlib import Path
 
 import streamlit as st
@@ -55,11 +56,29 @@ def _instalar_compat_container():
     except Exception:
         return
 
-    contador = itertools.count(1)
+    def _chave_estavel():
+        """Chave determinística por local de chamada (arquivo:linha:ocorrência) e por sessão.
+        Antes era um contador global que crescia a cada rerun: a chave do container mudava toda vez
+        que o usuário saía de um campo, o React remontava o formulário inteiro e o cursor se perdia."""
+        try:
+            frame = sys._getframe(2)
+            while frame and frame.f_code.co_filename == __file__:
+                frame = frame.f_back
+            local = f"{Path(frame.f_code.co_filename).stem}-{frame.f_lineno}" if frame else "x"
+        except Exception:
+            local = "x"
+        local = re.sub(r"[^A-Za-z0-9_-]", "", local)
+        try:
+            ocorrencias = st.session_state.setdefault("_dc_ocorrencias", {})
+            ocorrencias[local] = ocorrencias.get(local, 0) + 1
+            n = ocorrencias[local]
+        except Exception:
+            n = 1
+        return f"dccard-{local}-{n}"
 
     def container_compat(self, *args, **kwargs):
         if kwargs.get("border") and "key" not in kwargs:
-            kwargs["key"] = f"dccard-{next(contador)}"
+            kwargs["key"] = _chave_estavel()
             kwargs["border"] = False
             try:
                 return original(self, *args, **kwargs)
@@ -91,6 +110,7 @@ def _executar_js(codigo):
 
 def _injetar(tema, extra_css=""):
     _instalar_compat_container()
+    st.session_state["_dc_ocorrencias"] = {}  # reinicia a numeração das chaves a cada execução do script
     base = _ler_asset("ds_base.css")
     especifico = _ler_asset(f"ds_{tema}.css")
     st.markdown(f"<style>{base}\n{especifico}\n{extra_css}</style>", unsafe_allow_html=True)

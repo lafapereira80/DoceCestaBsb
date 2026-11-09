@@ -7,3 +7,5 @@ streamlit-cookies-controller
 requests
 bcrypt
 boto3
+pillow
+pillow-heif

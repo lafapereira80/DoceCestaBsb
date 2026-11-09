@@ -1,0 +1,92 @@
+/* ==========================================================
+   DESIGN SYSTEM - DOCE CESTA BRASÍLIA
+   Variáveis Globais para Manutenção Instantânea
+========================================================== */
+:root {
+    --brand-primary: #c5721f;
+    --brand-primary-dark: #9e520b;
+    --brand-secondary: #137333;
+    --brand-secondary-dark: #0d4e22;
+    --text-main: #4a2e1b;
+    --text-light: #775a46;
+    --bg-card: #ffffff;
+    --bg-page: #faf7f3;
+    --border-color: #e8ddd3;
+    --border-hover: #d2bfae;
+    --shadow-sm: 0 4px 12px rgba(90, 59, 40, 0.03);
+    --shadow-md: 0 8px 25px rgba(90, 59, 40, 0.08);
+}
+
+/* =========================================
+   REGRAS GLOBAIS STREAMLIT (Anti-FOUC)
+========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; color: var(--text-main) !important;}
+section[data-testid="stSidebar"], [data-testid="collapsedControl"], header, footer, .stAppDeployMenu { display: none !important; }
+.block-container { max-width: 1150px !important; padding-top: 1.5rem !important; padding-bottom: 4rem !important; }
+
+h1, h2, h3, h4 { color: var(--text-main) !important; font-weight: 800 !important; letter-spacing: -0.3px; }
+
+/* =========================================
+   CABEÇALHO (HERO BANNER)
+========================================= */
+.header-banner {
+    display: flex; align-items: center; justify-content: center; gap: 24px; margin-bottom: 2rem; width: 100%;
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-page) 100%); padding: 24px 30px;
+    border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+.header-logo { width: 130px; height: auto; object-fit: contain; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.05)); }
+.header-title { font-family: 'Dancing Script', cursive !important; font-size: clamp(36px, 5vw, 48px) !important; font-weight: 700 !important; color: var(--brand-primary) !important; margin: 0 !important; line-height: 1.1 !important; text-align: left; }
+.header-subtitle { font-size: clamp(13px, 2vw, 15px) !important; font-weight: 600 !important; color: var(--text-light) !important; margin-top: 6px !important; text-align: left;}
+
+/* =========================================
+   GRID FLUIDO MODERNO (Dispensa Media Queries)
+========================================= */
+.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 2.5rem; }
+.info-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 24px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; transition: all 0.3s ease; }
+.info-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-md); transform: translateY(-3px); }
+
+/* =========================================
+   CARDS E CONTAINERS STREAMLIT
+========================================= */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background: var(--bg-card) !important; border: 1px solid var(--border-color) !important; border-radius: 20px !important; 
+    padding: 24px !important; margin-bottom: 20px !important; box-shadow: var(--shadow-sm) !important; 
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--border-hover) !important; box-shadow: var(--shadow-md) !important; transform: translateY(-2px); }
+
+/* =========================================
+   BOTÕES E INPUTS
+========================================= */
+input, textarea, select { border-radius: 12px !important; border: 1px solid var(--border-color) !important; background-color: var(--bg-page) !important; font-size: 14px !important; padding: 12px !important; color: var(--text-main) !important; }
+input:focus, textarea:focus, select:focus { border-color: var(--brand-primary) !important; background-color: var(--bg-card) !important; box-shadow: 0 0 0 3px rgba(197, 114, 31, 0.1) !important; }
+
+div[data-testid="stButton"] button {
+    background: linear-gradient(135deg, var(--brand-secondary) 0%, var(--brand-secondary-dark)) !important; color: white !important; 
+    border-radius: 14px !important; font-size: 16px !important; font-weight: 800 !important; border: none !important; 
+    box-shadow: 0 4px 15px rgba(19, 115, 51, 0.25) !important; transition: all 0.3s ease !important; text-transform: uppercase;
+}
+div[data-testid="stButton"] button:hover { transform: translateY(-3px) !important; box-shadow: 0 8px 20px rgba(19, 115, 51, 0.4) !important; }
+
+/* =========================================
+   ADICIONAIS (GRID MÁGICO RESPONSIVO)
+========================================= */
+.adicionais-hero-card { background: var(--bg-page); border: 1px solid var(--border-color); border-radius: 20px; padding: 24px; margin: 2rem 0; box-shadow: var(--shadow-sm); }
+/* O segredo da responsividade moderna: Adapta o número de colunas sozinho! */
+.adicionais-grid-css { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px; margin-top: 15px;}
+.adicional-item-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px 10px; text-align: center; display: flex; flex-direction: column; align-items: center; transition: all 0.3s ease; }
+.adicional-item-box:hover { border-color: var(--border-hover); transform: translateY(-4px); box-shadow: var(--shadow-md); }
+
+/* =========================================
+   RESPONSIVIDADE ESTRITA MOBILE
+========================================= */
+@media (max-width: 640px) {
+    .block-container { padding: 1rem 0.8rem !important; }
+    .header-banner { flex-direction: column !important; text-align: center !important; padding: 20px 16px !important; gap: 16px !important; }
+    .header-title, .header-subtitle { text-align: center !important; }
+    div[data-testid="stVerticalBlockBorderWrapper"] { padding: 20px 16px !important; }
+    .lightbox-image { width: 90% !important; }
+}

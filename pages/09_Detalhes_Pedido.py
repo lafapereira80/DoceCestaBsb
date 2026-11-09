@@ -682,17 +682,27 @@ if not st.session_state.modo_edicao:
         if True:
             st.write("")
             link_pagamento_atual = pedido.get('infinitepay_url')
+
+            def _gerar_e_salvar_link():
+                if not gerar_link_checkout_infinitepay:
+                    st.error("Serviço da InfinitePay indisponível.")
+                    return
+                with st.spinner("Gerando link de pagamento..."):
+                    link_gerado = gerar_link_checkout_infinitepay(pedido_id=pedido_id, valor_total=novo_total, cliente_nome=cliente_limpo, cliente_tel=pedido.get('cliente_telefone') or '', cliente_email=email_cliente, cliente_endereco=pedido.get('endereco') or '')
+                    if link_gerado:
+                        supabase.table("pedidos").update({"infinitepay_url": link_gerado}).eq("id", pedido_id).execute()
+                        st.success("✅ Link gerado!")
+                        st.rerun()
+
             if link_pagamento_atual:
-                st.success(f"🔗 **Link de Pagamento Gerado:** {link_pagamento_atual}")
+                st.success("🔗 **Link de Pagamento (InfinitePay):**")
+                st.code(str(link_pagamento_atual), language=None)
+                st.link_button("Abrir link de pagamento", str(link_pagamento_atual), use_container_width=True)
+                if st.button("🔄 Gerar novo link de pagamento", key="regerar_link_pagamento", use_container_width=True):
+                    _gerar_e_salvar_link()
             else:
-                if st.button("💳 Gerar Link Encurtado para Pagamento", use_container_width=True):
-                    if gerar_link_checkout_infinitepay:
-                        with st.spinner("Gerando link seguro..."):
-                            link_gerado = gerar_link_checkout_infinitepay(pedido_id=pedido_id, valor_total=novo_total, cliente_nome=cliente_limpo, cliente_tel=pedido.get('cliente_telefone') or '', cliente_email=email_cliente, cliente_endereco=pedido.get('endereco') or '')
-                            if link_gerado:
-                                supabase.table("pedidos").update({"infinitepay_url": link_gerado}).eq("id", pedido_id).execute()
-                                st.success("✅ Link gerado!")
-                                st.rerun()
+                if st.button("💳 Gerar Link de Pagamento", use_container_width=True):
+                    _gerar_e_salvar_link()
 
             tx_id = pedido.get("infinitepay_transaction_id")
             if tx_id:
