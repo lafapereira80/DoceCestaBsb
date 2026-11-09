@@ -696,6 +696,8 @@ with st.container(border=True):
         if fotos_upload:
             st.success(f"📎 {len(fotos_upload)} foto(s) anexada(s).")
         fotos_depois = st.checkbox("Prefiro enviar as fotos depois, pelo WhatsApp.", key="input_fotos_depois")
+        if fotos_depois and not consentimento_fotos:
+            st.warning("⚠️ Mesmo preferindo enviar as fotos depois pelo WhatsApp, você precisa marcar a caixa acima autorizando o uso das imagens.")
 
 # ==========================================
 # 6. PAGAMENTO E RESUMO
@@ -928,6 +930,7 @@ if st.button("🎁 FINALIZAR PEDIDO AGORA", use_container_width=True, type="prim
                 try: registrar_uso(cupom_aplicado["id"], pedido_id, identificador_uso, desconto_cupom)
                 except Exception: pass
             alertas_pedido = []
+            nota_pendente = ""
             if st.session_state["s_adicionais"]:
                 try: salvar_adicionais_pedido(pedido_id, st.session_state["s_adicionais"])
                 except Exception as e_add: alertas_pedido.append(f"Extras não gravados na tabela de adicionais ({e_add}). Conferir campo 'adicionais' do pedido.")
@@ -942,10 +945,13 @@ if st.button("🎁 FINALIZAR PEDIDO AGORA", use_container_width=True, type="prim
                     if ok_fotos: n_fotos_enviadas = len(fotos_para_salvar)
                     else: alertas_pedido.append(f"FALHA NO ENVIO DAS FOTOS: {msg_fotos}")
                 else:
-                    alertas_pedido.append("Cliente vai enviar as fotos pelo WhatsApp.")
+                    nota_pendente = "📷 FOTOS PENDENTES: cliente escolheu enviar as fotos depois pelo WhatsApp — entrar em contato para pedir as fotos."
+                    try: enviar_notificacao_telegram("📷 <b>FOTOS PENDENTES</b> — pedido <code>" + str(pedido_id) + "</code>: cliente vai enviar as fotos pelo WhatsApp. Entre em contato para pedir.")
+                    except Exception: pass
             nota_extra = []
             if tem_polaroid:
-                nota_extra.append(f"📷 Fotos recebidas: {n_fotos_enviadas}")
+                if n_fotos_enviadas: nota_extra.append(f"📷 Fotos recebidas: {n_fotos_enviadas}")
+                elif nota_pendente: nota_extra.append(nota_pendente)
             if alertas_pedido:
                 nota_extra.extend(f"⚠️ {a}" for a in alertas_pedido)
                 try: enviar_notificacao_telegram("⚠️ <b>ATENÇÃO NO PEDIDO</b> <code>" + str(pedido_id) + "</code>\n" + "\n".join(esc(a) for a in alertas_pedido))

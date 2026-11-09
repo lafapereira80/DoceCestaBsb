@@ -642,6 +642,9 @@ if not st.session_state.modo_edicao:
         st.markdown(html_info2 + "</div>", unsafe_allow_html=True)
 
     fotos_pedido = listar_fotos(pedido_id)
+    if not fotos_pedido and "FOTOS PENDENTES" in str(pedido.get('pedido_especial') or "").upper():
+        st.warning("📷 **FOTOS PENDENTES (Polaroid):** o cliente escolheu **enviar as fotos depois pelo WhatsApp**. "
+                   "Entre em contato com ele para pedir as fotos antes de montar a cesta.")
     if fotos_pedido:
         with st.container(border=True):
             st.markdown("<div class='card-title'>📷 Fotos Polaroid</div>", unsafe_allow_html=True)
