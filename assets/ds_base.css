@@ -117,23 +117,18 @@ html body [data-test-script-state="running"]::before{opacity:1;animation:dc-run 
 @S [data-baseweb="checkbox"] [role="checkbox"]{border-radius:7px!important}
 @S [data-baseweb="checkbox"] input:checked + div, @S [data-baseweb="checkbox"] [aria-checked="true"]{background:var(--caramelo)!important;border-color:var(--caramelo)!important}
 @S [data-testid="stCheckbox"] input{accent-color:var(--caramelo)}
-/* radio vira "segmented control" — versão à prova de celular:
-   o texto da opção NUNCA é escondido nem pintado de branco (antes sumia no mobile),
-   a bolinha nativa permanece visível e o estado marcado usa fundo claro + texto escuro. */
+/* radio como "cartão": [ ● ] nome do item — bolinha desenhada por ::before (sempre ao lado do texto) */
 @S div[data-testid="stRadio"] div[role="radiogroup"], @S div[data-testid="stRadioGroup"]{gap:8px!important;flex-wrap:wrap!important}
-@S div[data-testid="stRadio"] label[data-baseweb="radio"], @S div[data-testid="stRadio"] label[data-testid="stRadioOption"]{
-  display:flex!important;align-items:center!important;gap:8px;max-width:100%;min-width:0;
-  background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:10px 14px!important;margin:0!important;
-  transition:border-color .2s ease,background .2s ease;cursor:pointer;-webkit-tap-highlight-color:transparent}
+@S div[data-testid="stRadio"] label[data-baseweb="radio"], @S div[data-testid="stRadio"] label[data-testid="stRadioOption"]{position:relative;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:10px!important;max-width:100%;min-width:0;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:11px 14px!important;margin:0!important;transition:border-color .2s ease,background .2s ease;cursor:pointer;-webkit-tap-highlight-color:transparent}
+@S div[data-testid="stRadio"] label[data-baseweb="radio"]::before, @S div[data-testid="stRadio"] label[data-testid="stRadioOption"]::before{content:"";flex:0 0 18px;width:18px;height:18px;box-sizing:border-box;border-radius:50%;border:2px solid var(--line-2);background:#fff;transition:border-color .2s ease,background .2s ease,box-shadow .2s ease}
 @S div[data-testid="stRadio"] label[data-baseweb="radio"]:hover, @S div[data-testid="stRadio"] label[data-testid="stRadioOption"]:hover{border-color:var(--caramelo)}
 @S div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked), @S div[data-testid="stRadio"] label[data-testid="stRadioOption"]:has(input:checked){background:var(--brand-bg);border-color:var(--caramelo)}
-@S div[data-testid="stRadio"] label > div:last-child, @S div[data-testid="stRadio"] label [data-testid="stMarkdownContainer"]{
-  display:block!important;visibility:visible!important;opacity:1!important;width:auto!important;min-width:0!important;max-width:100%!important;
-  flex:1 1 auto!important;overflow:visible!important;height:auto!important;font-size:14px!important}
-@S div[data-testid="stRadio"] label p{
-  display:block!important;visibility:visible!important;opacity:1!important;color:var(--ink)!important;-webkit-text-fill-color:var(--ink)!important;
-  font-size:14px!important;font-weight:600!important;line-height:1.35!important;margin:0!important;white-space:normal!important;overflow-wrap:anywhere;overflow:visible!important}
-@S div[data-testid="stRadio"] label input[type="radio"]{accent-color:var(--caramelo)}
+@S div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked)::before, @S div[data-testid="stRadio"] label[data-testid="stRadioOption"]:has(input:checked)::before{border-color:var(--caramelo);background:var(--caramelo);box-shadow:inset 0 0 0 3px #fff}
+/* esconde a bolinha do Streamlit (qualquer bloco da opção sem texto) */
+@S div[data-testid="stRadio"] label[data-baseweb="radio"] div:not(:has(p)), @S div[data-testid="stRadio"] label[data-testid="stRadioOption"] div:not(:has(p)){display:none!important}
+@S div[data-testid="stRadio"] label[data-baseweb="radio"] input[type="radio"], @S div[data-testid="stRadio"] label[data-testid="stRadioOption"] input[type="radio"]{position:absolute!important;opacity:0!important;width:1px!important;height:1px!important;pointer-events:none}
+@S div[data-testid="stRadio"] label[data-baseweb="radio"] p, @S div[data-testid="stRadio"] label[data-testid="stRadioOption"] p{display:block!important;visibility:visible!important;opacity:1!important;color:var(--ink)!important;-webkit-text-fill-color:var(--ink)!important;font-size:14px!important;font-weight:600!important;line-height:1.35!important;margin:0!important;white-space:normal!important;overflow-wrap:anywhere;text-align:left!important}
+@S div[data-testid="stRadio"] label[data-baseweb="radio"] > div:has(p), @S div[data-testid="stRadio"] label[data-testid="stRadioOption"] > div:has(p){display:block!important;flex:1 1 auto;min-width:0;width:auto!important}
 @media (max-width:640px){
   @S div[data-testid="stRadio"] div[role="radiogroup"], @S div[data-testid="stRadioGroup"]{flex-direction:column!important;align-items:stretch!important}
   @S div[data-testid="stRadio"] label[data-baseweb="radio"], @S div[data-testid="stRadio"] label[data-testid="stRadioOption"]{width:100%!important;min-height:48px}
@@ -270,16 +265,3 @@ html body [data-test-script-state="running"]::before{opacity:1;animation:dc-run 
   @S [data-testid="stSelectbox"] [role="group"]:focus-within, @S [data-testid="stMultiSelect"] [role="group"]:focus-within{box-shadow:0 0 0 4px rgba(197,114,31,.16)!important}
 }
 
-/* radio: bolinha e nome do item lado a lado (celular e computador) */
-@S div[data-testid="stRadio"] label[data-baseweb="radio"], @S div[data-testid="stRadio"] label[data-testid="stRadioOption"], @S div[data-testid="stRadio"] label{
-  flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-start!important}
-@S div[data-testid="stRadio"] label > div{flex-direction:row!important;align-items:center!important;margin:0!important}
-@S div[data-testid="stRadio"] label > div:first-child{flex:0 0 auto!important;width:auto!important;margin-right:0!important}
-@S div[data-testid="stRadio"] label > div:last-child, @S div[data-testid="stRadio"] label [data-testid="stMarkdownContainer"]{display:block!important;text-align:left!important;flex:1 1 auto!important}
-@S div[data-testid="stRadio"] label p{display:inline!important;text-align:left!important}
-
-/* radio (correção final): tudo dentro da opção em LINHA — bolinha | nome */
-@S div[data-testid="stRadio"] label, @S div[data-testid="stRadioGroup"] label{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:10px!important}
-@S div[data-testid="stRadio"] label div, @S div[data-testid="stRadioGroup"] label div{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;width:auto!important;max-width:100%!important}
-@S div[data-testid="stRadio"] label [data-testid="stMarkdownContainer"], @S div[data-testid="stRadioGroup"] label [data-testid="stMarkdownContainer"]{display:block!important;width:auto!important}
-@S div[data-testid="stRadio"] label p, @S div[data-testid="stRadioGroup"] label p{display:block!important;margin:0!important;white-space:normal!important}
