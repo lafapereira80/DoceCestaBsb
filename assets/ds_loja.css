@@ -203,3 +203,10 @@
 @S .lj-feats{padding:14px 0 0!important;margin:14px 0 0!important}
 @S .lj-feats li{margin:0!important;padding:0!important}
 .lj-info{align-items:start}
+
+/* abas da vitrine: remove a linha colada embaixo dos botões e dá respiro até os cards */
+@S div[data-testid="stTabs"] [role="tablist"]{border-bottom:none!important;box-shadow:none!important;background-image:none!important;padding-bottom:6px!important;margin-bottom:14px!important}
+@S div[data-testid="stTabs"] [role="tablist"]::before, @S div[data-testid="stTabs"] [role="tablist"]::after{display:none!important;content:none!important}
+@S div[data-testid="stTabs"] [data-baseweb="tab-border"], @S div[data-testid="stTabs"] [data-baseweb="tab-list"] + div[aria-hidden="true"]{display:none!important;height:0!important;border:0!important;background:transparent!important}
+@S div[data-testid="stTabs"] > div:first-child, @S div[data-testid="stTabs"] [data-baseweb="tab-list"]{border-bottom:none!important;box-shadow:none!important}
+@S div[data-testid="stTabs"] [role="tabpanel"]{padding-top:10px!important}
