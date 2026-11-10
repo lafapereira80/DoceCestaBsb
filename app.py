@@ -488,7 +488,7 @@ if produtos_adicionais:
     st.markdown(
         f"""<div class="lj-tags">
             <div class="lj-tags-head"><h2>Dê um toque só seu ✨</h2>
-            <p>Balões, polaroids, flores e mimos para pendurar no presente. Você escolhe os adicionais na próxima tela, durante a montagem. Toque numa foto para ampliar.</p></div>
+            <p>Balões, polaroids, flores e mimos para adicionar no presente. Você escolhe os adicionais na próxima tela, durante a montagem. Toque numa foto para ampliar.</p></div>
             <div class="lj-tags-scroll"><div class="lj-tags-inner"><div class="lj-wire" aria-hidden="true">{luzes}</div>{cards_html}</div></div></div>""".replace("\n", ""),
         unsafe_allow_html=True,
     )
