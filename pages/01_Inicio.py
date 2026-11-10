@@ -648,6 +648,10 @@ with st.container(border=True):
                     escolhidos = st.multiselect(f"Escolha até {maximo} opções", prods, default=def_items, format_func=lambda p: p["nome"], max_selections=maximo, key=f"mul_{cesta_obj['id']}_{idx_grupo}_{cat}")
                     nova_selecao.setdefault(cat, []).extend(escolhidos)
 
+        else:
+            # cesta sem itens para personalizar: dá respiro no fim do cartão (o valor encostava na borda)
+            st.markdown('<div style="height: 28px;"></div>', unsafe_allow_html=True)
+
 # ==========================================
 # 5. MIMOS EXTRAS
 # ==========================================
