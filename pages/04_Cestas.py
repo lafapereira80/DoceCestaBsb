@@ -98,7 +98,8 @@ with aba_nova:
                 imagem_arquivo = st.file_uploader(
                     "📷 Foto de Referência (aparece na vitrine e no checkout)",
                     type=["jpg", "jpeg", "png", "webp"],
-                    help="Essa é a mesma foto exibida no site público (app.py) e na tela de montagem de pedido."
+                    help="Essa é a mesma foto exibida no site público (app.py) e na tela de montagem de pedido.",
+                    key=f"upl_nova_cesta_{st.session_state.get('upl_nova_n', 0)}",
                 )
                 if imagem_arquivo:
                     st.image(imagem_arquivo, width=120, caption="Pré-visualização")
@@ -156,6 +157,7 @@ with aba_nova:
                         cadastrar_cesta(dados)
                         st.toast(f"✅ Cesta '{nome}' adicionada com sucesso!")
                         st.cache_data.clear()
+                        st.session_state["upl_nova_n"] = st.session_state.get("upl_nova_n", 0) + 1  # novo uploader limpo
                         st.rerun()
                     except Exception as e:
                         st.error(f"Erro ao salvar: {e}")
@@ -306,7 +308,7 @@ with aba_lista:
                             e_imagem_arquivo = st.file_uploader(
                                 "📷 Substituir Foto de Referência (opcional)",
                                 type=["jpg", "jpeg", "png", "webp"],
-                                key=f"upl_cesta_{c_id}_{idx_aba}",
+                                key=f"upl_cesta_{c_id}_{idx_aba}_{st.session_state.get('upl_edit_n', 0)}",
                             )
 
                         e_desc = st.text_area("Descrição", value=cesta_selecionada.get("descricao", "") or "")
@@ -379,6 +381,7 @@ with aba_lista:
                                     atualizar_cesta(c_id, update_data)
                                     st.toast(f"✅ Cesta '{e_nome}' atualizada com sucesso!")
                                     st.cache_data.clear()
+                                    st.session_state["upl_edit_n"] = st.session_state.get("upl_edit_n", 0) + 1  # uploader limpo
                                     st.rerun()
                                 except Exception as e:
                                     st.error(f"Erro ao salvar: {e}")

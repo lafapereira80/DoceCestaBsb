@@ -1,3 +1,5 @@
+import io
+import mimetypes
 import streamlit as st
 import boto3
 from config.db import supabase
@@ -49,13 +51,39 @@ class CestaService:
     # =====================================================
     # UPLOAD IMAGEM DA CESTA (CLOUDFLARE R2)
     # =====================================================
+    @staticmethod
+    def _otimizar_imagem(arquivo, lado_max=1600):
+        """Devolve (bytes, extensão, content_type). Se o Pillow falhar, envia o arquivo original."""
+        if hasattr(arquivo, "seek"):
+            arquivo.seek(0)
+        bruto = arquivo.getvalue() if hasattr(arquivo, "getvalue") else arquivo.read()
+        ext_orig = (arquivo.name.rsplit(".", 1)[-1] if "." in arquivo.name else "jpg").lower()
+        tipo_orig = getattr(arquivo, "type", "") or mimetypes.guess_type(arquivo.name)[0] or "image/jpeg"
+        try:
+            from PIL import Image, ImageOps
+            img = ImageOps.exif_transpose(Image.open(io.BytesIO(bruto)))
+            img.thumbnail((lado_max, lado_max))
+            buf = io.BytesIO()
+            if ext_orig == "png" and img.mode in ("RGBA", "LA", "P"):
+                img.save(buf, format="PNG", optimize=True)
+                return buf.getvalue(), "png", "image/png"
+            if ext_orig == "webp":
+                img.convert("RGB").save(buf, format="WEBP", quality=85)
+                return buf.getvalue(), "webp", "image/webp"
+            img.convert("RGB").save(buf, format="JPEG", quality=85, optimize=True)
+            return buf.getvalue(), "jpg", "image/jpeg"
+        except Exception:
+            return bruto, ext_orig, tipo_orig
+
+
     @classmethod
     def upload_imagem_cesta(cls, arquivo):
         if arquivo is None:
             return None
 
         try:
-            extensao = arquivo.name.split(".")[-1]
+            # Redimensiona/comprime fotos grandes de celular antes de enviar ao R2
+            conteudo, extensao, tipo = cls._otimizar_imagem(arquivo)
             nome_arquivo = f"{uuid.uuid4()}.{extensao}"
             caminho = f"{nome_arquivo}"
 
@@ -63,14 +91,11 @@ class CestaService:
             url_base_r2 = st.secrets["r2_urls"]["cestas"].rstrip("/")
             nome_bucket = "cestas"
 
-            if hasattr(arquivo, "seek"):
-                arquivo.seek(0)
-
             s3_client.upload_fileobj(
-                arquivo,
+                io.BytesIO(conteudo),
                 nome_bucket,
                 caminho,
-                ExtraArgs={"ContentType": getattr(arquivo, "type", "image/jpeg")}
+                ExtraArgs={"ContentType": tipo}
             )
 
             url_publica = f"{url_base_r2}/{caminho}"

@@ -156,7 +156,7 @@ if st.session_state.pedido_em_montagem:
                 </div>
                 """, unsafe_allow_html=True)
             
-            if p_ativo.get('anotacoes_internas'): st.warning(f"✨ **Atenções Internas:** {p_ativo.get('anotacoes_internas')}")
+            if str(p_ativo.get('anotacoes_internas') or '').replace('[FRETE_DEFINIDO]', '').strip(): st.warning(f"✨ **Atenções Internas:** {str(p_ativo.get('anotacoes_internas')).replace('[FRETE_DEFINIDO]', '').strip()}")
             
             st.markdown("#### 📋 Checklist")
             

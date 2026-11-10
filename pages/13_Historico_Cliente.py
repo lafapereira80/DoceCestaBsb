@@ -354,7 +354,7 @@ if pedido_aberto_id:
         with col_an1:
             with st.container(border=True):
                 st.markdown('<div class="card-title">📝 Anotações Internas</div>', unsafe_allow_html=True)
-                st.text_area("", value=pedido.get("anotacoes_internas") or "Nenhuma anotação registrada.", disabled=True, height=140, label_visibility="collapsed")
+                st.text_area("", value=str(pedido.get("anotacoes_internas") or "").replace("[FRETE_DEFINIDO]", "").strip() or "Nenhuma anotação registrada.", disabled=True, height=140, label_visibility="collapsed")
 
         with col_an2:
             with st.container(border=True):
