@@ -1,0 +1,126 @@
+name: Migrar banco de dados completo (Supabase -> Neon)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: migrar-banco-neon
+  cancel-in-progress: false
+
+jobs:
+  migrar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar o Postgres Client 17
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl ca-certificates lsb-release
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: Diagnóstico seguro dos secrets (não expõe a senha)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEON_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          echo "SUPABASE_URL - tamanho: ${#SUPABASE_URL} | primeiros 13 caracteres: ${SUPABASE_URL:0:13}"
+          echo "NEON_DATABASE_URL - tamanho: ${#NEON_URL} | primeiros 13 caracteres: ${NEON_URL:0:13}"
+          echo "(os dois deveriam começar exatamente com: postgresql://)"
+
+      - name: Copiar dados do Supabase (dump em texto puro, sem filtro por sed)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          pg_dump "$SUPABASE_URL" \
+            --no-owner --no-privileges --no-acl \
+            -N cron -N auth -N storage -N extensions -N supabase_functions \
+            -N pgsodium -N graphql -N graphql_public -N realtime -N vault -N net -N pgbouncer \
+            -f dump.sql
+
+      - name: Remover objetos do Supabase que o Neon não suporta
+        run: |
+          python3 << 'PYEOF'
+          import re
+
+          with open("dump.sql", encoding="utf-8") as f:
+              texto = f.read()
+
+          # 1. CREATE EXTENSION / COMMENT ON EXTENSION (linha única)
+          texto = re.sub(r"^CREATE EXTENSION.*$\n?", "", texto, flags=re.MULTILINE)
+          texto = re.sub(r"^COMMENT ON EXTENSION.*$\n?", "", texto, flags=re.MULTILINE)
+
+          # 2. CREATE/ALTER EVENT TRIGGER (bloco de múltiplas linhas, termina no ";")
+          texto = re.sub(r"^CREATE EVENT TRIGGER.*?;\s*$\n?", "", texto, flags=re.MULTILINE | re.DOTALL)
+          texto = re.sub(r"^ALTER EVENT TRIGGER.*?;\s*$\n?", "", texto, flags=re.MULTILINE | re.DOTALL)
+          texto = re.sub(r"^COMMENT ON EVENT TRIGGER.*?;\s*$\n?", "", texto, flags=re.MULTILINE | re.DOTALL)
+
+          with open("dump.sql", "w", encoding="utf-8") as f:
+              f.write(texto)
+
+          restantes = len(re.findall(r"^(CREATE|ALTER|COMMENT ON) (EXTENSION|EVENT TRIGGER)", texto, re.MULTILINE))
+          print(f"Linhas problemáticas restantes no dump: {restantes}")
+          PYEOF
+
+      - name: Preparar o banco no Neon (limpo, do zero)
+        env:
+          NEON_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          psql "$NEON_URL" -v ON_ERROR_STOP=1 -c "
+            DROP SCHEMA IF EXISTS public CASCADE;
+            CREATE SCHEMA public;
+            CREATE SCHEMA IF NOT EXISTS extensions;
+            SET search_path TO public;
+            CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA public;
+            CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\" SCHEMA public;
+          "
+          psql "$NEON_URL" -v ON_ERROR_STOP=1 -c "DROP PUBLICATION IF EXISTS supabase_realtime;"
+
+      - name: Criar papéis do Supabase usados nas políticas de RLS (vazios, sem uso real)
+        env:
+          NEON_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          psql "$NEON_URL" -v ON_ERROR_STOP=1 -c "
+            DO \$\$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'anon') THEN
+                CREATE ROLE anon NOLOGIN;
+              END IF;
+              IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'authenticated') THEN
+                CREATE ROLE authenticated NOLOGIN;
+              END IF;
+              IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'service_role') THEN
+                CREATE ROLE service_role NOLOGIN;
+              END IF;
+            END
+            \$\$;
+          "
+
+      - name: Restaurar os dados no Neon (para em qualquer erro real)
+        env:
+          NEON_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: psql "$NEON_URL" -v ON_ERROR_STOP=1 -f dump.sql
+
+      - name: Conferir tabelas e colunas migradas
+        env:
+          NEON_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          psql "$NEON_URL" -c "
+            SELECT table_name, column_name, data_type
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+            ORDER BY table_name, ordinal_position;
+          "
+
+      - name: Conferir quantidade de linhas por tabela de negócio
+        env:
+          NEON_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          for t in categorias produtos cestas cesta_produtos clientes usuarios \
+                   pedidos pedido_adicionais pedido_fotos configuracoes_loja vitrine_secoes; do
+            echo "== $t =="
+            psql "$NEON_URL" -c "SELECT count(*) FROM \"$t\";"
+          done

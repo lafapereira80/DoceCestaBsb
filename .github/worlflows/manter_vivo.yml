@@ -1,0 +1,50 @@
+name: Manter App Streamlit Vivo
+
+"on":
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar Playwright
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Acordar o app Streamlit
+        run: |
+          cat > acordar.py << 'EOF'
+          from playwright.sync_api import sync_playwright
+
+          URL = "https://docecestabrasilia.streamlit.app/"
+
+          with sync_playwright() as p:
+              browser = p.chromium.launch()
+              page = browser.new_page()
+              page.goto(URL, timeout=60000, wait_until="load")
+              page.wait_for_timeout(5000)
+
+              try:
+                  botao = page.get_by_role("button", name="get this app back up", exact=False)
+                  if botao.count() > 0:
+                      print("App estava hibernando, clicando para acordar...")
+                      botao.first.click()
+                      page.wait_for_timeout(20000)
+              except Exception as e:
+                  print(f"Nenhum botão de hibernação encontrado ({e}) - app provavelmente já estava acordado.")
+
+              print("Título da página:", page.title())
+              browser.close()
+          EOF
+          python acordar.py

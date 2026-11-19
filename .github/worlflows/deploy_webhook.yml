@@ -1,0 +1,64 @@
+name: Publicar webhook InfinitePay no Cloudflare
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infinitepay-webhook/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infinitepay-webhook
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verificar segredos obrigatórios do GitHub
+        run: |
+          faltando=0
+          for nome in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do
+            if [ -z "${!nome}" ]; then
+              echo "::error::O segredo $nome não está configurado no GitHub (Settings > Secrets and variables > Actions)."
+              faltando=1
+            fi
+          done
+          exit $faltando
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Verificar o token da Cloudflare
+        run: |
+          curl -sS -f -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            https://api.cloudflare.com/client/v4/user/tokens/verify \
+            || (echo "::error::CLOUDFLARE_API_TOKEN inválido ou expirado. Crie um novo token." && exit 1)
+
+      - name: Publicar (deploy)
+        run: npx wrangler deploy
+
+      # Opcional: só atualiza no Worker os segredos que existirem no GitHub.
+      # Os que não estiverem aqui continuam como já estão configurados no Cloudflare.
+      - name: Atualizar segredos do Worker (opcionais)
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          INFINITEPAY_HANDLE: ${{ secrets.INFINITEPAY_HANDLE }}
+          INFINITEPAY_API_KEY: ${{ secrets.INFINITEPAY_API_KEY }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -n "$NEON_DATABASE_URL" ]; then printf '%s' "$NEON_DATABASE_URL" | npx wrangler secret put DATABASE_URL; fi
+          if [ -n "$INFINITEPAY_HANDLE" ]; then printf '%s' "$INFINITEPAY_HANDLE" | npx wrangler secret put INFINITEPAY_HANDLE; fi
+          if [ -n "$INFINITEPAY_API_KEY" ]; then printf '%s' "$INFINITEPAY_API_KEY" | npx wrangler secret put INFINITEPAY_API_KEY; fi
+          if [ -n "$TELEGRAM_TOKEN" ]; then printf '%s' "$TELEGRAM_TOKEN" | npx wrangler secret put TELEGRAM_TOKEN; fi
+          if [ -n "$TELEGRAM_CHAT_ID" ]; then printf '%s' "$TELEGRAM_CHAT_ID" | npx wrangler secret put TELEGRAM_CHAT_ID; fi
+          echo "Concluído."

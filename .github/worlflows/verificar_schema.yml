@@ -1,0 +1,32 @@
+name: Verificar schema do Neon (colunas por tabela)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar cliente PostgreSQL
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Listar todas as tabelas e colunas do Neon
+        env:
+          NEON_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          psql "$NEON_URL" -c "
+            SELECT table_name, column_name, data_type
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+            ORDER BY table_name, ordinal_position;
+          "
+
+      - name: Contar linhas de cada tabela de negócio
+        env:
+          NEON_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          for t in categorias produtos cestas cesta_produtos clientes usuarios \
+                   pedidos pedido_adicionais pedido_fotos configuracoes_loja vitrine_secoes; do
+            echo "== $t =="
+            psql "$NEON_URL" -c "SELECT count(*) FROM \"$t\";"
+          done
