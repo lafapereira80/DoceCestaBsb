@@ -278,7 +278,7 @@ for lead in leads_filtrados:
                         if link:
                             supabase.table("pedidos").update({"infinitepay_url": link}).eq("id", pedido_id_novo).execute()
                             _update_defensivo(lead["id"], {"link_pagamento": link}, set())
-                            st.success(f"Link gerado: {link}")
+                            st.toast("✅ Link de pagamento gerado!")
                             st.rerun()
                         else:
                             st.error("Não foi possível gerar o link (confira o valor mínimo de R$ 1,00).")
@@ -286,7 +286,8 @@ for lead in leads_filtrados:
                         st.error(f"Erro ao gerar pedido/link: {e}")
 
             if lead.get("link_pagamento"):
-                st.info(f"🔗 Link de pagamento atual: {lead['link_pagamento']}")
+                st.info("🔗 Link de pagamento atual (toque no ícone para copiar):")
+                st.code(str(lead["link_pagamento"]), language=None)
 
             if st.button("📧 Enviar proposta por e-mail", key=f"env_email_{lead['id']}", use_container_width=True):
                 itens_html = "".join(

@@ -1,0 +1,16 @@
+{
+  "name": "doce-cesta-brasilia-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aplicativo mobile Doce Cesta Brasília",
+  "dependencies": {
+    "@aparajita/capacitor-biometric-auth": "^9.1.2",
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0",
+    "@capacitor/splash-screen": "^7.0.0",
+    "@capacitor/status-bar": "^7.0.0"
+  }
+}

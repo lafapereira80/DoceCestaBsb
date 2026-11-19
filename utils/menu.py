@@ -60,6 +60,9 @@ def menu_lateral():
                 _grupo("Catálogo da loja")
                 st.page_link("pages/04_Cestas.py", label="Cestas e kits", icon="🧺")
                 st.page_link("pages/05_Produtos.py", label="Produtos e insumos", icon="🍓")
+                st.page_link("pages/26_Estoque.py", label="Controle de estoque", icon="📦")
+                if perfil == "Administrador":
+                    st.page_link("pages/25_Precificacao.py", label="Precificação", icon="💲")
                 st.page_link("pages/15_Categorias.py", label="Categorias", icon="🏷️")
                 st.page_link("pages/17_Secoes_Vitrine.py", label="Seções da vitrine", icon="🖥️")
 

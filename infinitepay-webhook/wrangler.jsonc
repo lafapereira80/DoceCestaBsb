@@ -3,7 +3,11 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
   "observability": {
     "enabled": true
-  }
+  },
+  "routes": [
+    { "pattern": "pagamento.docecestabrasilia.com.br", "custom_domain": true }
+  ]
 }

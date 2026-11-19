@@ -32,7 +32,7 @@
       var l = (el.getAttribute('aria-label') || '').toLowerCase();
       var mode = '';
       if (/whatsapp|telefone|celular/.test(l)) mode = 'tel';
-      else if (/cpf|cep|\bn[º°o]\b|^n/.test(l) && /cpf|cep|n[º°o]/.test(l)) mode = 'numeric';
+      else if (/\bcpf\b|\bcep\b|^n[º°](?![a-zà-ú])/.test(l)) mode = 'numeric';
       else if (/e-?mail/.test(l)) mode = 'email';
       if (mode && el.tagName === 'INPUT'){ el.setAttribute('inputmode', mode); if (mode === 'email') el.setAttribute('autocapitalize', 'off'); }
       if (/e-?mail/.test(l)){ el.setAttribute('autocorrect', 'off'); el.setAttribute('spellcheck', 'false'); }

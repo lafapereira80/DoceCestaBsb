@@ -238,12 +238,18 @@ MODULOS = [
     ("pages/22_Cupons.py", "Cupons", "🎟️", "Descontos e campanhas", "cupom desconto promocao"),
     ("pages/04_Cestas.py", "Cestas e kits", "🧺", "Preços, fotos e promoções", "cestas kits catalogo"),
     ("pages/05_Produtos.py", "Produtos e insumos", "🍓", "Itens e adicionais", "produtos insumos adicionais"),
+    ("pages/26_Estoque.py", "Controle de estoque", "📦", "Entradas, baixas, inventário e compras", "estoque inventario compras insumos saldo"),
+    ("pages/25_Precificacao.py", "Precificação", "💲", "Custo, margem e preço das cestas", "precificacao preco custo margem lucro"),
     ("pages/15_Categorias.py", "Categorias", "🏷️", "Organize os produtos", "categorias"),
     ("pages/17_Secoes_Vitrine.py", "Seções da vitrine", "🖥️", "Abas do catálogo online", "vitrine secoes abas"),
     ("pages/20_Configuracoes_Loja.py", "Configurações da loja", "⚙️", "Bairros, horários e regras", "configuracoes bairros frete"),
     ("pages/07_Usuarios.py", "Usuários", "🔑", "Quem acessa o painel", "usuarios acesso senha"),
     ("app.py", "Ver a vitrine", "🌐", "Como o cliente enxerga a loja", "loja vitrine site"),
 ]
+
+
+if (st.session_state.get("usuario") or {}).get("perfil") != "Administrador":
+    MODULOS = [m for m in MODULOS if m[0] != "pages/25_Precificacao.py"]
 
 
 def _norm(t):

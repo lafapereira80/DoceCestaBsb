@@ -25,6 +25,13 @@ try:
 except ImportError:
     gerar_link_checkout_infinitepay = None
 
+try:
+    from utils.encurtador import link_para_cliente, diagnosticar as diagnosticar_link_curto
+except ImportError:
+    def link_para_cliente(pedido_id, link_longo):
+        return link_longo
+    diagnosticar_link_curto = None
+
 
 def esc(valor, padrao='-'):
     """Escapa texto vindo do banco antes de inserir em blocos HTML (evita XSS/quebra de layout)."""
@@ -289,20 +296,8 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background: #ffffff !important
 """, unsafe_allow_html=True)
 
 
-MARCA_FRETE = "[FRETE_DEFINIDO]"  # indica que o frete foi definido manualmente (permite R$ 0,00)
-
-
-def _nota_sem_marca(txt):
-    return str(txt or "").replace(MARCA_FRETE, "").strip()
-
-
-def _nota_com_marca(txt, tem_marca):
-    limpo = _nota_sem_marca(txt)
-    return (limpo + "\n" + MARCA_FRETE).strip() if tem_marca else limpo
-
-
-def salvar_nota_interna(pid, key, tem_marca=False):
-    nova_nota = _nota_com_marca(st.session_state[key], tem_marca)
+def salvar_nota_interna(pid, key):
+    nova_nota = st.session_state[key]
     try:
         supabase.table("pedidos").update({"anotacoes_internas": nova_nota}).eq("id", pid).execute()
         st.toast("✅ Anotação interna salva com sucesso!")
@@ -399,9 +394,9 @@ sugestao_frete = 0.0
 if cep_cliente and len(cep_cliente) == 8:
     sugestao_frete = calcular_frete_por_cep(cep_cliente)
 
-frete_definido_manual = MARCA_FRETE in str(pedido.get('anotacoes_internas') or '')
-# Só sugere frete pelo CEP enquanto o frete nunca foi definido; depois disso, R$ 0,00 é um valor válido
-valor_padrao_frete = frete_db if (frete_db > 0 or frete_definido_manual) else sugestao_frete
+frete_isento_db = "frete isento" in str(pedido.get('adicionais') or '').lower()
+# Frete zerado de propósito (isento) deve ser respeitado; só sugere pelo CEP se nunca foi definido
+valor_padrao_frete = frete_db if (frete_db > 0 or frete_isento_db) else sugestao_frete
 
 if "modo_edicao" not in st.session_state: st.session_state.modo_edicao = False
 
@@ -656,9 +651,6 @@ if not st.session_state.modo_edicao:
         st.markdown(html_info2 + "</div>", unsafe_allow_html=True)
 
     fotos_pedido = listar_fotos(pedido_id)
-    if not fotos_pedido and "FOTOS PENDENTES" in str(pedido.get('pedido_especial') or "").upper():
-        st.warning("📷 **FOTOS PENDENTES (Polaroid):** o cliente escolheu **enviar as fotos depois pelo WhatsApp**. "
-                   "Entre em contato com ele para pedir as fotos antes de montar a cesta.")
     if fotos_pedido:
         with st.container(border=True):
             st.markdown("<div class='card-title'>📷 Fotos Polaroid</div>", unsafe_allow_html=True)
@@ -670,7 +662,7 @@ if not st.session_state.modo_edicao:
 
     with st.container(border=True):
         st.markdown("<div style='font-size: 13px; font-weight: 800; color: #b06000; margin-bottom: 4px;'>⚠️ Anotações Internas</div>", unsafe_allow_html=True)
-        st.text_area("Anotações Internas", value=_nota_sem_marca(pedido.get('anotacoes_internas')), height=80, key=f"nota_{pedido_id}", on_change=salvar_nota_interna, args=(pedido_id, f"nota_{pedido_id}", frete_definido_manual), label_visibility="collapsed")
+        st.text_area("Anotações Internas", value=pedido.get('anotacoes_internas') or '', height=80, key=f"nota_{pedido_id}", on_change=salvar_nota_interna, args=(pedido_id, f"nota_{pedido_id}"), label_visibility="collapsed")
 
     st.markdown("<div class='section-step'><span class='step-num'>⚡</span><span style='color:#137333;'>Resumo de Valores</span></div>", unsafe_allow_html=True)
     with st.container(border=True):
@@ -698,28 +690,42 @@ if not st.session_state.modo_edicao:
 
         if True:
             st.write("")
-            link_pagamento_atual = pedido.get('infinitepay_url')
+            link_pagamento_oficial = pedido.get('infinitepay_url')
+            link_pagamento_atual = link_para_cliente(pedido_id, link_pagamento_oficial) if link_pagamento_oficial else None
 
-            def _gerar_e_salvar_link():
+            def _gerar_link_pagamento():
                 if not gerar_link_checkout_infinitepay:
                     st.error("Serviço da InfinitePay indisponível.")
                     return
-                with st.spinner("Gerando link de pagamento..."):
+                with st.spinner("Gerando link seguro..."):
                     link_gerado = gerar_link_checkout_infinitepay(pedido_id=pedido_id, valor_total=novo_total, cliente_nome=cliente_limpo, cliente_tel=pedido.get('cliente_telefone') or '', cliente_email=email_cliente, cliente_endereco=pedido.get('endereco') or '')
-                    if link_gerado:
-                        supabase.table("pedidos").update({"infinitepay_url": link_gerado}).eq("id", pedido_id).execute()
-                        st.success("✅ Link gerado!")
-                        st.rerun()
+                if link_gerado:
+                    supabase.table("pedidos").update({"infinitepay_url": link_gerado}).eq("id", pedido_id).execute()
+                    st.toast("✅ Link gerado!")
+                    st.rerun()
+                else:
+                    st.error("Não foi possível gerar o link agora. Tente novamente em instantes.")
 
-            if link_pagamento_atual:
-                st.success("🔗 **Link de Pagamento (InfinitePay):**")
-                st.code(str(link_pagamento_atual), language=None)
-                st.link_button("Abrir link de pagamento", str(link_pagamento_atual), use_container_width=True)
-                if st.button("🔄 Gerar novo link de pagamento", key="regerar_link_pagamento", use_container_width=True):
-                    _gerar_e_salvar_link()
+            if link_pagamento_oficial:
+                usando_curto = link_pagamento_atual != link_pagamento_oficial
+                st.success("🔗 **Link de pagamento pronto para enviar ao cliente** (toque no ícone para copiar):" if usando_curto
+                           else "🔗 **Link de pagamento gerado pela InfinitePay** (toque no ícone para copiar):")
+                st.code(link_pagamento_atual, language=None)
+                if not usando_curto:
+                    st.caption("⚠️ Link curto próprio indisponível no momento; enviando o link oficial completo. Abra “Detalhes do link” e clique em Testar para ver o motivo.")
+                with st.expander("Detalhes do link (oficial, teste e novo link)"):
+                    st.caption("Link oficial completo da InfinitePay:")
+                    st.code(link_pagamento_oficial, language=None)
+                    if diagnosticar_link_curto and st.button("🔍 Testar link curto", key=f"btn_testar_curto_{pedido_id}"):
+                        with st.spinner("Testando..."):
+                            diag = diagnosticar_link_curto(pedido_id, link_pagamento_oficial)
+                        (st.success if diag["ok"] else st.error)(diag["mensagem"])
+                        st.caption(f"Link curto: {diag['curto']} · HTTP: {diag['status'] if diag['status'] is not None else '-'} · Secret LINK_CURTO_BASE: {'configurado' if diag['secret'] else 'NÃO configurado (usando workers.dev)'}")
+                    if status_db != "Pago" and st.button("🔄 Gerar novo link de pagamento", key=f"btn_novo_link_{pedido_id}"):
+                        _gerar_link_pagamento()
             else:
-                if st.button("💳 Gerar Link de Pagamento", use_container_width=True):
-                    _gerar_e_salvar_link()
+                if st.button("💳 Gerar Link de Pagamento (InfinitePay)", use_container_width=True):
+                    _gerar_link_pagamento()
 
             tx_id = pedido.get("infinitepay_transaction_id")
             if tx_id:
@@ -969,7 +975,7 @@ else:
             e_msg = st.text_area("Mensagem do Cartão", value=pedido.get('mensagem') or '', height=70)
             e_pedido_especial = st.text_area("Pedido Especial", value=pedido.get('pedido_especial') or '', height=70)
         with c10: 
-            e_anotacoes = st.text_area("Anotações Internas", value=_nota_sem_marca(pedido.get('anotacoes_internas')), height=185)
+            e_anotacoes = st.text_area("Anotações Internas", value=pedido.get('anotacoes_internas') or '', height=185)
 
     # =====================================================
     # PRODUTOS E EXTRAS (FECHAMENTO)
@@ -1241,7 +1247,7 @@ else:
     with st.container(border=True):
         st.markdown("<div class='card-title'>💰 FECHAMENTO FINANCEIRO</div>", unsafe_allow_html=True)
         c_f1, c_f2, c_f3 = st.columns(3)
-        with c_f1: e_frete = st.number_input("Frete / Taxa (R$)", min_value=0.0, step=0.5, format="%.2f", value=float(valor_padrao_frete))
+        with c_f1: e_frete = st.number_input("Frete / Taxa (R$)", min_value=0.0, step=5.0, value=float(valor_padrao_frete), key=f"e_frete_{pedido_id}")
         with c_f2: e_desc = st.number_input("Desconto (%)", min_value=0.0, max_value=100.0, step=1.0, value=desc_perc_inicial)
         with c_f3: e_pag = st.selectbox("Pagamento Edit", ["Pix", "Cartão de Crédito", "Faturamento", "Transferência"], index=["Pix", "Cartão de Crédito", "Faturamento", "Transferência"].index(pedido.get('pagamento') or 'Pix') if pedido.get('pagamento') in ["Pix", "Cartão de Crédito", "Faturamento", "Transferência"] else 0)
 
@@ -1272,6 +1278,8 @@ else:
             msg_add = ""
             if valor_desconto > 0:
                 msg_add += f"Desconto: - R$ {formatar_moeda(valor_desconto)}\n"
+            if e_frete <= 0:
+                msg_add += "Frete isento\n"
             if str_ext:
                 msg_add += "\nEXTRAS E ADICIONAIS:\n" + "\n".join(str_ext)
 
@@ -1298,7 +1306,7 @@ else:
                 "cliente_telefone": e_tel, "cliente_cpf": e_cpf, "destinatario_nome": e_dest.strip(),
                 "destinatario_telefone": e_dtel, "motivo_homenagem": e_motivo, "endereco": e_end,
                 "data_entrega": e_data.strftime("%Y-%m-%d"), "periodo_entrega": e_per, "mensagem": e_msg,
-                "anotacoes_internas": _nota_com_marca(e_anotacoes, True), "pedido_especial": e_pedido_especial.strip(),
+                "anotacoes_internas": e_anotacoes.strip(), "pedido_especial": e_pedido_especial.strip(),
                 "cesta_nome": n_cesta, "cesta_id": id_cesta, "produtos": "\n\n".join(str_prod),
                 "adicionais": msg_add.strip(), "pagamento": e_pag,
                 "valor_frete": e_frete, "valor_total": total_liquido,

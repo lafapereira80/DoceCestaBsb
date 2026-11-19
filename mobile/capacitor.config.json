@@ -1,0 +1,38 @@
+{
+  "appId": "br.com.docecestabrasilia.app",
+  "appName": "Doce Cesta Brasília",
+  "webDir": "www",
+  "backgroundColor": "#FFF8F0",
+  "appendUserAgent": "DoceCestaApp/1.0",
+  "server": {
+    "url": "https://www.docecestabrasilia.com.br",
+    "androidScheme": "https",
+    "cleartext": false,
+    "errorPath": "offline.html",
+    "allowNavigation": [
+      "docecestabrasilia.com.br",
+      "*.docecestabrasilia.com.br"
+    ]
+  },
+  "android": {
+    "allowMixedContent": false,
+    "appendUserAgent": "DoceCestaApp/1.0"
+  },
+  "ios": {
+    "appendUserAgent": "DoceCestaApp/1.0",
+    "contentInset": "never"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#3B2417",
+      "androidScaleType": "CENTER_INSIDE",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#FFF8F0",
+      "overlaysWebView": false
+    }
+  }
+}

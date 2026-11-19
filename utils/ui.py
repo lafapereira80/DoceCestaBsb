@@ -33,12 +33,21 @@ def brl(valor):
 
 
 @st.cache_data(show_spinner=False)
-def _ler_asset(nome):
+def _ler_asset_cache(nome, mtime):
+    # `mtime` faz parte da chave do cache: editar o arquivo invalida o cache sem reiniciar o servidor.
     caminho = _ASSETS / nome
     try:
         return caminho.read_text(encoding="utf-8").replace("@S", "html body .stApp")
     except Exception:
         return ""
+
+
+def _ler_asset(nome):
+    try:
+        mtime = (_ASSETS / nome).stat().st_mtime_ns
+    except OSError:
+        mtime = 0
+    return _ler_asset_cache(nome, mtime)
 
 
 # ----------------------------------------------------------------------------
@@ -108,13 +117,57 @@ def _executar_js(codigo):
         )
 
 
+def teclado_campos(mapa):
+    """Define o teclado do celular de cada campo pela CHAVE (key=) do widget, de forma explícita.
+
+    mapa: {"input_tel": "tel", "input_cpf": "numeric", "input_email": "email", "input_nome": "text", ...}
+    O Streamlit não tem parâmetro `inputmode`, então o atributo é aplicado no navegador. Não depende
+    do texto do rótulo nem de arquivo em cache: o script é gerado a cada execução e reaplicado quando
+    a página re-renderiza e no momento em que o campo recebe foco (que é quando o teclado é escolhido).
+    """
+    import json
+    codigo = """
+(function(){
+  var D = document, W = window;
+  W.__dcTeclado = __MAPA__;
+  function modoDe(el){
+    var host = el.closest('[class*="st-key-"]');
+    if (!host) return '';
+    for (var i = 0; i < host.classList.length; i++){
+      var c = host.classList[i];
+      if (c.indexOf('st-key-') === 0 && Object.prototype.hasOwnProperty.call(W.__dcTeclado, c.slice(7))) return W.__dcTeclado[c.slice(7)];
+    }
+    return '';
+  }
+  function aplicar(el){
+    if (!el || el.tagName !== 'INPUT') return;
+    var m = modoDe(el);
+    if (m && el.getAttribute('inputmode') !== m) el.setAttribute('inputmode', m);
+    if (m === 'text') el.removeAttribute('pattern');
+  }
+  function varrer(){ D.querySelectorAll('input').forEach(aplicar); }
+  varrer();
+  if (!W.__dcTecladoObs){
+    W.__dcTecladoObs = new MutationObserver(function(){ varrer(); setTimeout(varrer, 150); });
+    W.__dcTecladoObs.observe(D.body, {childList: true, subtree: true});
+    D.addEventListener('focusin', function(e){ aplicar(e.target); }, true);
+  }
+})();
+""".replace("__MAPA__", json.dumps(mapa))
+    _executar_js(codigo)
+
+
 def _injetar(tema, extra_css=""):
     _instalar_compat_container()
     st.session_state["_dc_ocorrencias"] = {}  # reinicia a numeração das chaves a cada execução do script
     base = _ler_asset("ds_base.css")
     especifico = _ler_asset(f"ds_{tema}.css")
     st.markdown(f"<style>{base}\n{especifico}\n{extra_css}</style>", unsafe_allow_html=True)
-    _executar_js(_ler_asset("motion.js") + f"\nwindow.__dcBoot && window.__dcBoot('{tema}');")
+    _executar_js(
+        _ler_asset("motion.js")
+        + f"\nwindow.__dcBoot && window.__dcBoot('{tema}');"
+        + "\n" + _ler_asset("app_bridge.js")  # biometria da área admin (só ativa dentro do app mobile)
+    )
 
 
 def tema_loja():

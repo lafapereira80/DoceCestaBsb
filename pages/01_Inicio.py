@@ -26,8 +26,15 @@ PAGAMENTO_PIX = "Pix (Aprovação Imediata)"
 PAGAMENTO_CARTAO = "Cartão de Crédito"
 
 st.set_page_config(page_title="Finalizar Pedido | Doce Cesta Brasília", page_icon="🎁", layout="centered", initial_sidebar_state="collapsed")
-from utils.ui import tema_loja  # noqa: E402
+from utils.ui import tema_loja, teclado_campos  # noqa: E402
 tema_loja()
+teclado_campos({
+    "input_nome": "text", "input_email": "email", "input_tel": "tel", "input_cpf": "numeric",
+    "input_dest_nome": "text", "input_dest_tel": "tel", "input_motivo": "text",
+    "input_cep": "numeric", "input_cidade": "text", "input_bairro": "text", "input_rua": "text",
+    "input_numero": "numeric", "input_complemento": "text", "input_obs": "text",
+    "input_codigo_cupom": "text",
+})
 
 def obter_hora_brasilia():
     return datetime.now(timezone(timedelta(hours=-3)))
@@ -420,7 +427,7 @@ with st.container(border=True):
 with st.container(border=True):
     renderizar_secao(2, "Para quem é o presente?", SECOES_OK[1], False)
     col_d1, col_d2 = st.columns(2)
-    with col_d1: st.text_input("Nome de quem vai receber *", value=st.session_state["s_dest_nome"], placeholder="Ex: Ana Clara", key="input_dest_nome")
+    with col_d1: st.text_input("Nome de quem vai receber *", value=st.session_state["s_dest_nome"], placeholder="Ex: Ana Clara", key="input_dest_nome", autocomplete="off")
     with col_d2: st.text_input("WhatsApp do destinatário", value=st.session_state["s_dest_tel"], placeholder="(Opcional)", key="input_dest_tel")
     st.text_input("Qual a Ocasião? (Opcional)", value=st.session_state["s_motivo"], placeholder="Ex: Aniversário, Dia das Mães...", key="input_motivo")
     st.text_area("💌 Cartão de Presente", value=st.session_state["s_mensagem"], height=100, placeholder="Escreva aqui a mensagem...", key="input_mensagem")

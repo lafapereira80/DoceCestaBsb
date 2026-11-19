@@ -49,6 +49,7 @@ def gerar_link_checkout_infinitepay(pedido_id: str, valor_total: float, cliente_
     """
     Gera o link de pagamento na InfinitePay (Checkout Integrado).
 
+    - Retorna o link OFICIAL da InfinitePay (sem encurtadores de terceiros).
     - Webhook no formato atual: "webhook": {"url": ..., "events": [...]}
     - Autenticação por X-Api-Key quando INFINITEPAY_API_KEY existir nos secrets
       (opcional: sem ela, usa a handle).
@@ -92,21 +93,21 @@ def gerar_link_checkout_infinitepay(pedido_id: str, valor_total: float, cliente_
                 }
             ],
         }
-        if not api_key:
-            base["handle"] = handle
+        base["handle"] = handle
         if redirect_url:
             base["redirect_url"] = redirect_url
 
         webhook_novo = {"webhook": {"url": webhook_url, "events": ["paid"]}}
         webhook_legado = {"webhook_url": webhook_url}
 
-        # Variações, da mais completa para a mais simples
+        # Variações, da mais completa para a mais simples.
+        # webhook_url (formato oficial da API) vem SEMPRE primeiro; "sem webhook" é o último recurso.
         tentativas = [
-            {**base, **webhook_novo, "customer": customer},
-            {**base, **webhook_legado, "customer": customer},
-            {**base, **webhook_novo},
-            {**base, **webhook_legado},
-            {**base},
+            ({**base, **webhook_legado, "customer": customer}, True),
+            ({**base, **webhook_legado}, True),
+            ({**base, **webhook_legado, **webhook_novo, "customer": customer}, True),
+            ({**base, "customer": customer}, False),
+            ({**base}, False),
         ]
 
         headers = {
@@ -118,7 +119,7 @@ def gerar_link_checkout_infinitepay(pedido_id: str, valor_total: float, cliente_
             headers["X-Api-Key"] = str(api_key)
 
         ultimo_erro = ""
-        for payload in tentativas:
+        for payload, com_webhook in tentativas:
             try:
                 response = requests.post(URL_API, json=payload, headers=headers, timeout=15)
             except requests.RequestException as e:
@@ -133,7 +134,9 @@ def gerar_link_checkout_infinitepay(pedido_id: str, valor_total: float, cliente_
                     continue
                 link_longo = _extrair_url(dados)
                 if link_longo:
-                    return str(link_longo).strip()  # link original da InfinitePay, sem encurtador
+                    if not com_webhook:
+                        st.warning("⚠️ Link gerado SEM aviso automático de pagamento. Use o botão '🔄 Verificar pagamento' ou marque como Pago manualmente.")
+                    return link_longo
                 ultimo_erro = f"Resposta sem link de checkout: {str(dados)[:300]}"
                 continue
 
@@ -148,3 +151,34 @@ def gerar_link_checkout_infinitepay(pedido_id: str, valor_total: float, cliente_
     except Exception as e:
         st.error(f"Falha ao gerar o link de pagamento: {e}")
         return None
+
+
+def verificar_pagamento_infinitepay(pedido_id: str, transaction_nsu: str = "", slug: str = ""):
+    """
+    Consulta direto na InfinitePay (payment_check) se o pedido já foi pago.
+    Retorna dict: {"pago": bool, "transaction_nsu": str, "erro": str}
+    """
+    handle = _secret("INFINITEPAY_HANDLE", "vanessa-hagen")
+    corpo = {"handle": handle, "order_nsu": str(pedido_id)}
+    if transaction_nsu:
+        corpo["transaction_nsu"] = transaction_nsu
+    if slug:
+        corpo["slug"] = slug
+    try:
+        r = requests.post(
+            "https://api.checkout.infinitepay.io/payment_check",
+            json=corpo,
+            headers={"Content-Type": "application/json", "Accept": "application/json", "User-Agent": "Mozilla/5.0"},
+            timeout=15,
+        )
+    except requests.RequestException as e:
+        return {"pago": False, "transaction_nsu": "", "erro": f"Falha de conexão: {e}"}
+    if r.status_code != 200:
+        return {"pago": False, "transaction_nsu": "", "erro": f"HTTP {r.status_code}: {r.text[:200]}"}
+    try:
+        dados = r.json()
+    except ValueError:
+        return {"pago": False, "transaction_nsu": "", "erro": "Resposta inválida da InfinitePay"}
+    d = dados.get("data", dados) if isinstance(dados, dict) else {}
+    pago = d.get("paid") in (True, "true") or float(d.get("paid_amount") or 0) > 0
+    return {"pago": bool(pago), "transaction_nsu": str(d.get("transaction_nsu") or transaction_nsu or ""), "erro": ""}
